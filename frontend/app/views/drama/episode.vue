@@ -70,6 +70,35 @@
       </div>
     </header>
 
+    <div v-if="workflowStages.length" class="workflow-bar">
+      <div class="workflow-bar-meta">
+        <span class="workflow-bar-title">{{ t('episode.workflow.title') }}</span>
+        <select class="workflow-mode-select" :value="currentTemplateId" @change="onTemplateChange">
+          <option value="">{{ t('episode.workflow.default') }}</option>
+          <option v-for="tpl in templateOptions" :key="tpl.id" :value="tpl.id">{{ tpl.name }}</option>
+        </select>
+        <span class="workflow-bar-count">{{ workflowDoneCount }}/{{ workflowStages.length }}</span>
+      </div>
+      <div class="workflow-bar-stages">
+        <button
+          v-for="stage in workflowStages"
+          :key="stage.id"
+          :class="['workflow-chip', {
+            done: workflowStatus[stage.id]?.done,
+            active: activeWorkflowStage === stage.id,
+            confirm: stage.confirm,
+          }]"
+          :title="workflowStatus[stage.id]?.detail || ''"
+          :data-confirm="t('episode.workflow.confirm')"
+          @click="onWorkflowStage(stage.id)"
+        >
+          <span class="workflow-chip-dot" />
+          <span>{{ stage.label }}</span>
+          <span v-if="workflowStatus[stage.id]?.detail" class="workflow-chip-detail">{{ workflowStatus[stage.id].detail }}</span>
+        </button>
+      </div>
+    </div>
+
     <div class="studio-body">
     <!-- ========== LEFT SIDEBAR ========== -->
     <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
@@ -494,7 +523,7 @@
                   <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                   {{ sbs.length ? t('episode.sb.rebreak') : t('episode.sb.startBreak') }}
                 </button>
-                <button class="btn btn-sm" :disabled="videoPromptBatch.running || !sbs.length" @click="batchVideoPrompts">
+                <button v-if="workflowHasStage('video_prompt')" class="btn btn-sm" :disabled="videoPromptBatch.running || !sbs.length" @click="batchVideoPrompts">
                   <Loader2 v-if="videoPromptBatch.running" :size="11" class="animate-spin" />
                   <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                   {{ videoPromptBatch.running ? t('episode.sb.promptProgress', { done: videoPromptBatch.completed, total: videoPromptBatch.total }) : (videoSelectMode && selectedVideoSbIds.length ? t('episode.sb.promptSelected', { n: selectedVideoSbIds.length }) : t('episode.sb.batchPrompts')) }}
@@ -1454,7 +1483,7 @@ import {
   Users, FileText, FolderKanban, Clapperboard, Download, Loader2,
   Plus, X, ListTodo, CircleHelp,
 } from 'lucide-vue-next'
-import { api, dramaAPI, episodeAPI, storyboardAPI, characterAPI, sceneAPI, propAPI, taskAPI, mergeAPI, aiConfigAPI, uploadAPI } from '~/composables/useApi'
+import { api, dramaAPI, episodeAPI, storyboardAPI, characterAPI, sceneAPI, propAPI, taskAPI, mergeAPI, aiConfigAPI, uploadAPI, workflowAPI, templateAPI } from '~/composables/useApi'
 import { startTour, autoTour } from '~/composables/useTour'
 import { useAgent } from '~/composables/useAgent'
 import { resolveTextModelSelection } from '~/utils/text-model-selection'
@@ -1489,6 +1518,56 @@ const localRaw = ref(''), localScript = ref('')
 const rawContent = computed(() => episode.value?.content || '')
 const scriptContent = computed(() => episode.value?.script_content || episode.value?.scriptContent || '')
 const epId = computed(() => episode.value?.id || 0)
+
+// ===== 固化流程（制作模板解析）— 展示与导航，不阻断现有操作 =====
+const workflowStages = ref([])
+const workflowStatus = ref({})
+const workflowSource = ref('default')
+const workflowTemplateName = ref('')
+const workflowDoneCount = computed(() => workflowStages.value.filter(s => workflowStatus.value[s.id]?.done).length)
+const workflowHasStage = (id) => workflowStages.value.some(s => s.id === id)
+const templateOptions = ref([])
+const currentTemplateId = ref('')
+
+async function loadTemplateOptions() {
+  try { templateOptions.value = await templateAPI.list() || [] } catch { templateOptions.value = [] }
+}
+
+async function onTemplateChange(event) {
+  const next = event?.target?.value ?? ''
+  if (next === currentTemplateId.value) return
+  try {
+    await dramaAPI.update(dramaId, { template_id: next || null })
+    toast.success(next ? `已切换制作模式：${templateOptions.value.find(t => t.id === next)?.name || next}` : '已切换为默认流程')
+    await loadWorkflow(epId.value)
+  } catch (e) {
+    toastError(e)
+    if (event?.target) event.target.value = currentTemplateId.value
+  }
+}
+const activeWorkflowStage = computed(() =>
+  workflowStages.value.find(s => !workflowStatus.value[s.id]?.done)?.id || '')
+
+async function loadWorkflow(id = epId.value) {
+  if (!id) return
+  try {
+    const res = await workflowAPI.get(id)
+    workflowStages.value = res?.workflow?.stages || []
+    workflowStatus.value = res?.status || {}
+    workflowSource.value = res?.source || 'default'
+    workflowTemplateName.value = res?.template_name || res?.template_id || ''
+    currentTemplateId.value = res?.template_id || ''
+  } catch {
+    // 工作流信息是增强项，失败不影响工作台
+  }
+}
+
+function onWorkflowStage(stageId) {
+  if (stageId === 'script') return goSubStep('script:rewrite')
+  if (stageId === 'extract' || stageId === 'image') return goSubStep('prod:assets')
+  if (stageId === 'storyboard' || stageId === 'video_prompt' || stageId === 'video') return goSubStep('prod:videos')
+  if (stageId === 'merge') return goMainStage('export')
+}
 const rawLen = computed(() => localRaw.value.replace(/\s/g, '').length || 0)
 const scriptLen = computed(() => localScript.value.replace(/\s/g, '').length || 0)
 
@@ -2703,6 +2782,8 @@ async function refresh() {
       try { scenes.value = await episodeAPI.scenes(ep.id) } catch { scenes.value = [] }
       try { propItems.value = await episodeAPI.props(ep.id) } catch { propItems.value = [] }
       sbs.value = await episodeAPI.storyboards(ep.id)
+      loadWorkflow(ep.id)
+      loadTemplateOptions()
       selectedVideoSbIds.value = selectedVideoSbIds.value.filter(id => sbs.value.some(sb => sb.id === id))
       if (sbs.value.length) {
         const currentSelectedId = selectedSb.value?.id
@@ -6236,4 +6317,21 @@ button.video-task-metric.on { box-shadow: 0 0 0 2px var(--accent); }
   }
 
 }
+.workflow-bar { display: flex; align-items: center; gap: 14px; padding: 8px 16px; border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.02); }
+.workflow-bar-meta { display: flex; align-items: center; gap: 8px; font-size: 11px; white-space: nowrap; opacity: .8; }
+.workflow-bar-title { font-weight: 600; letter-spacing: .04em; }
+.workflow-bar-source { opacity: .65; max-width: 160px; overflow: hidden; text-overflow: ellipsis; }
+.workflow-mode-select { padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.04); color: inherit; font-size: 11px; outline: none; cursor: pointer; }
+.workflow-mode-select option { background: #1b1b1f; color: #eee; }
+.workflow-bar-count { font-variant-numeric: tabular-nums; opacity: .65; }
+.workflow-bar-stages { display: flex; align-items: center; gap: 6px; flex: 1; overflow-x: auto; padding-bottom: 1px; }
+.workflow-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.1); background: transparent; color: inherit; font-size: 11px; white-space: nowrap; cursor: pointer; }
+.workflow-chip:hover { background: rgba(255,255,255,.06); }
+.workflow-chip.done { border-color: rgba(62,207,142,.4); }
+.workflow-chip.active { border-color: rgba(255,122,69,.6); background: rgba(255,122,69,.12); }
+.workflow-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.25); flex: none; }
+.workflow-chip.done .workflow-chip-dot { background: #3ecf8e; }
+.workflow-chip.active .workflow-chip-dot { background: #ff7a45; }
+.workflow-chip.confirm::after { content: ' · ' attr(data-confirm); font-size: 9px; opacity: .5; }
+.workflow-chip-detail { opacity: .6; }
 </style>

@@ -1,4 +1,4 @@
-# 🎬 Huobao Drama - AI 숏드라마 생성 플랫폼
+# 🎬 AI 숏드라마 제작 플랫폼
 
 <div align="center">
 
@@ -7,20 +7,10 @@
 [![Node Version](https://img.shields.io/badge/Node.js-20+-339933?style=flat&logo=node.js)](https://nodejs.org)
 [![Vue Version](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat&logo=vue.js)](https://vuejs.org)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![다운로드](https://img.shields.io/github/v/release/chatfire-AI/huobao-drama?style=flat&logo=github&label=%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C)](https://github.com/chatfire-AI/huobao-drama/releases/latest)
 
 [中英双语](README.md) | [English](README.en.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | **한국어**
 
 [기능](#-기능) • [빠른 시작](#-빠른-시작) • [튜토리얼](#-그림-튜토리얼) • [데스크톱 앱](#-데스크톱-앱-권장) • [배포](#-배포)
-
-<h2>🔑 <a href="https://api.firemux.com">Huobao API Key 받기 👉 바로 보기</a></h2>
-
-**텍스트 · 이미지 · 영상 모든 AI 기능, Key 하나로 활성화**
-
-배포 후 「설정 → 火宝快捷 설정」에 Key 를 붙여넣으면 추천 설정 3개가 한 번에 입력됩니다
-
-<h3>📥 <a href="https://github.com/chatfire-AI/huobao-drama/releases/latest">데스크톱 앱 다운로드 (macOS / Windows)</a></h3>
-<h3>🌐 <a href="https://www.firemux.cn">공식 웹사이트</a></h3>
 
 </div>
 
@@ -28,7 +18,7 @@
 
 ## 📖 프로젝트 소개
 
-Huobao Drama는 AI 기반 숏드라마 자동 제작 플랫폼으로, 각본 생성, 캐릭터 디자인, 스토리보드 제작부터 영상 합성까지 전 과정을 자동화합니다.
+AI Short Drama Studio는 AI 기반 숏드라마 자동 제작 플랫폼으로, 각본 생성, 캐릭터 디자인, 스토리보드 제작부터 영상 합성까지 전 과정을 자동화합니다.
 
 ### 🎯 핵심 가치
 
@@ -133,7 +123,7 @@ data/       — 생성된 에셋과 SQLite 데이터베이스
 
 ```bash
 # 저장소 클론
-git clone https://github.com/chatfire-AI/huobao-drama.git
+git clone https://github.com/wangzhentao155-debug/huobao-drama.git
 cd huobao-drama
 
 # 백엔드 의존성 설치
@@ -183,7 +173,7 @@ cd ../backend && npm start
 
 ### 🗄️ 데이터베이스
 
-SQLite 내장(`better-sqlite3` + WAL 모드). 최초 시작 시 테이블 자동 생성(멱등 DDL 재생 + 시드 데이터). 기본 파일은 `data/huobao.sqlite3`이며 `SQLITE_PATH`로 변경 가능. 데스크톱 버전의 데이터는 사용자 데이터 디렉터리(`~/Library/Application Support/HuobaoDrama/data/`)에 저장됩니다.
+SQLite 내장(`better-sqlite3` + WAL 모드). 최초 시작 시 테이블 자동 생성(멱등 DDL 재생 + 시드 데이터). 기본 파일은 `data/huobao.sqlite3`이며 `SQLITE_PATH`로 변경 가능. 데스크톱 버전의 데이터는 사용자 데이터 디렉터리(`~/Library/Application Support/AIShortDramaStudio/data/`)에 저장됩니다.
 
 구버전 MySQL에서 데이터 마이그레이션:
 
@@ -201,8 +191,7 @@ cd backend && npx tsx scripts/import-mysql-to-sqlite.ts
 시작 후 모든 AI 기능(텍스트/이미지/영상)을 사용하려면 먼저 모델 서비스를 설정해야 합니다. 미설정 시 페이지 상단에 배너로 안내합니다:
 
 1. 「설정」 페이지 열기
-2. 「火宝快捷 설정」에 Huobao API Key 붙여넣기([api.firemux.com에서 발급](https://api.firemux.com)). 텍스트, 이미지, 영상 추천 설정 3개가 한 번에 입력됩니다
-3. 또는 「수동 템플릿」으로 프로바이더별 추가. 연결 테스트 지원
+2. 「수동 템플릿」에서 텍스트/이미지/영상 프로바이더를 추가. 연결 테스트 지원
 
 설정이 완료되면 배너가 자동으로 사라지고 에피소드 제작을 시작할 수 있습니다.
 
@@ -284,26 +273,13 @@ cd backend && npx tsx scripts/import-mysql-to-sqlite.ts
 
 ### 🖥️ 데스크톱 앱(권장)
 
-**⬇️ 빌드된 설치 파일: [GitHub Releases](https://github.com/chatfire-AI/huobao-drama/releases/latest) · [중국용 미러(Tencent COS)](https://installer.firemux.site/huobao-drama/v4.0.11/)**
-
 | 플랫폼 | 다운로드 파일 |
 |---|---|
-| macOS(Apple Silicon, M 시리즈) | `HuobaoDrama-4.0.5-arm64.dmg` |
-| macOS(Intel) | `HuobaoDrama-4.0.5.dmg` |
-| Windows | `HuobaoDrama.Setup.4.0.5.exe` |
+| macOS(Apple Silicon, M 시리즈) | `AIShortDramaStudio-4.1.0-p0-arm64.dmg` |
+| macOS(Intel) | `AIShortDramaStudio-4.1.0-p0.dmg` |
+| Windows | `AIShortDramaStudio.Setup.4.1.0-p0.exe` |
 
 > 중국 본토에서는 GitHub이 불안정하므로 Tencent COS 미러를 이용하세요. 앱 내 업데이터도 COS를 우선하고 GitHub으로 폴백합니다.
-
-**커맨드라인 설치(권장, 복구 불필요)**: curl로 다운로드하면 macOS 격리 속성이 붙지 않아 "손상됨" 경고 없이 바로 실행됩니다(Apple Silicon은 `-arm64.dmg`, Intel은 일반 dmg 사용):
-
-```bash
-curl -L -o /tmp/HuobaoDrama.dmg https://installer.firemux.site/huobao-drama/v4.0.11/HuobaoDrama-4.0.11-arm64.dmg \
-  && hdiutil attach -nobrowse /tmp/HuobaoDrama.dmg \
-  && cp -R /Volumes/HuobaoDrama*/HuobaoDrama.app /Applications/ \
-  && hdiutil detach /Volumes/HuobaoDrama*
-```
-
-빌드 불필요 — dmg/exe를 다운로드해 바로 설치하면 됩니다. 설치된 클라이언트는 내장 업데이터로 자동 업데이트됩니다. (소스에서 직접 패키징하려면 아래 명령을 참조하세요.)
 
 더블클릭 설치로 바로 사용할 수 있는 데스크톱 버전(macOS + Windows). 데이터베이스(SQLite), 생성된 미디어 파일, Agent 스킬은 모두 사용자 데이터 디렉터리에 저장되며 앱을 삭제필필도 데이터에 영향이 없습니다.
 
@@ -313,23 +289,22 @@ npm run dist        # macOS dmg(arm64 + Intel)
 npm run dist:win    # Windows NSIS 설치 프로그램(win-x64, macOS에서 크로스 빌드 가능)
 
 # 산출물
-# desktop/release/HuobaoDrama-<버전>-arm64.dmg        (Apple Silicon)
-# desktop/release/HuobaoDrama-<버전>.dmg              (Intel)
-# desktop/release/HuobaoDrama Setup <버전>.exe        (Windows)
+# desktop/release/AIShortDramaStudio-<버전>-arm64.dmg        (Apple Silicon)
+# desktop/release/AIShortDramaStudio-<버전>.dmg              (Intel)
+# desktop/release/AIShortDramaStudio Setup <버전>.exe        (Windows)
 ```
 
 설치 안내:
 
 - macOS 미서명 패키지는 첫 실행 시 "App이 손상되어 열 수 없습니다"라는 메시지가 뜰 수 있습니다(Apple Silicon에서 흔함). 이는 Gatekeeper 격리 속성 때문이며 파일이 실제로 손상된 것은 아닙니다. 복구 방법은 두 가지입니다:
   1. **dmg에 복구 스크립트 포함**: 앱을 "응용 프로그램"으로 드래그한 후 dmg 창 하단의 "如提示已损坏请双击我.command"를 더블클릭하면 자동으로 복구됩니다;
-  2. 또는 터미널에서 `sudo xattr -cr /Applications/HuobaoDrama.app` 실행.
+  2. 또는 터미널에서 `sudo xattr -cr /Applications/AIShortDramaStudio.app` 실행.
 
   복구는 처음 한 번만 필요하며, 이후에는 정상 실행되고 앱 내 자동 업데이트에도 영향이 없습니다.
 - Windows 미서명 패키지는 SmartScreen에서 「추가 정보 → 실행」 선택
-- 사용자 데이터 디렉터리: `~/Library/Application Support/HuobaoDrama/`(데이터베이스, 생성된 미디어, 온라인 편집한 스킬 복사본)
+- 사용자 데이터 디렉터리: `~/Library/Application Support/AIShortDramaStudio/`(데이터베이스, 생성된 미디어, 온라인 편집한 스킬 복사본)
 - FFmpeg/FFprobe 바이너리 내장, 시스템 설치 불필요
 - Electron은 37.x로 고정: better-sqlite3의 win32 프리빌드가 해당 ABI까지만 지원(크로스 패키징 시 컴파일 불필요의 핵심)
-- 앱 내 외부 링크(「api.firemux.com에서 Key 받기」 등)는 시스템 브라우저로 바로 열립니다
 
 #### 🔄 앱 내 업데이트(Apple 서명 불필요)
 
@@ -479,7 +454,7 @@ HUOBAO_VERSION=4.0.5 docker compose up -d --build
 
 ### Q: 데스크톱 버전의 데이터는 어디에 저장되나요?
 
-A: `~/Library/Application Support/HuobaoDrama/data/`(SQLite 데이터베이스 + 생성된 이미지/영상)에 저장되며, 온라인 편집한 스킬의 복사본은 같은 수준의 `workspace/` 디렉터리에 있습니다. 개발 모드에서는 저장소의 `data/` 디렉터리를 사용합니다.
+A: `~/Library/Application Support/AIShortDramaStudio/data/`(SQLite 데이터베이스 + 생성된 이미지/영상)에 저장되며, 온라인 편집한 스킬의 복사본은 같은 수준의 `workspace/` 디렉터리에 있습니다. 개발 모드에서는 저장소의 `data/` 디렉터리를 사용합니다.
 
 ### Q: 구버전 MySQL 데이터를 SQLite로 마이그레이션하려면?
 
@@ -490,8 +465,6 @@ A: MySQL에 연결 가능한 상태(환경 변수 또는 `backend/.env`)를 유�
 A: 설치할 필요가 없습니다. 프로젝트에 `ffmpeg-static` / `ffprobe-static` 바이너리가 내장되어 있습니다(데스크톱 버전에도 포함). 시스템 `PATH`의 FFmpeg와 충돌하지 않으며, `FFMPEG_BIN`/`FFPROBE_BIN`으로 명시적으로 지정할 수도 있습니다.
 
 ### Q: 페이지 상단에 「모델 미설정」이 표시됩니다?
-
-A: 정상적인 첫 배포 안내입니다. 「설정」 페이지에서 「火宝快捷 설정」에 API Key를 붙여넣어 한 번에 입력하거나, 「수동 템플릿」으로 프로바이더를 추가하세요. 텍스트, 이미지, 영상 3가지 모두에 활성화된 설정이 있으면 배너가 자동으로 사라집니다.
 
 ### Q: 프런트엔드가 백엔드 API에 연결되지 않습니다?
 
@@ -531,7 +504,6 @@ A: 백엔드는 최초 시작 시 모든 테이블을 자동으로 생성합니�
 
 ### v3.0.0 (2026-08)
 
-
 #### 🚀 배포 및 경험 최적화
 
 - Docker 배포 준비 개선
@@ -542,7 +514,6 @@ A: 백엔드는 최초 시작 시 모든 테이블을 자동으로 생성합니�
   - `docker/init.sql` 및 납출 스크립트 추가(DBA 검토 / 사전 테이블 생성)
 - 첫 사용 가이드
   - AI 서비스 미설정 시 사이트 상단 배너로 설정 페이지 안내
-  - 설정 페이지에 「火宝快捷 설정」 추가: Key 하나로 텍스트/이미지/영상 추천 설정 3개 입력
   - 모델 미설정 오류의 중국어화 및 설정 페이지 안내
 - 영상 모델 기본값을 Seedance 2.0 Fast로 조정
 - 프로바이더 통합: OpenAI / Gemini / Volcano Engine만 유지

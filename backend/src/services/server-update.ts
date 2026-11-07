@@ -1,7 +1,7 @@
 /**
  * 服务器 / Docker 部署的版本检查与更新触发
  *
- * - 版本检查：复用桌面版同一份发布清单（HUOBAO_UPDATE_FEED 的 latest.json）
+ * - 版本检查：仅使用 HUOBAO_UPDATE_FEED 的 latest.json；未配置时不连接任何默认更新源
  * - 当前版本：构建时注入 HUOBAO_VERSION（Docker ARG / 环境变量），缺省回退 package.json
  * - 一键更新：仅在配置 Watchtower（HUOBAO_WATCHTOWER_URL）时可用——容器不可变，
  *   容器内自更新是反模式，正确路径是由 Watchtower 拉新镜像并重建本容器；
@@ -9,13 +9,10 @@
  */
 import { getAppVersion } from '../version.js'
 
-// 双源：COS（国内直连）优先，GitHub（海外）兜底；HUOBAO_UPDATE_FEED 可整体覆盖
+// 二次开发默认不连原项目更新源；需要更新时显式配置 HUOBAO_UPDATE_FEED
 const FEED_URLS = process.env.HUOBAO_UPDATE_FEED
   ? [process.env.HUOBAO_UPDATE_FEED]
-  : [
-    'https://installer.firemux.site/huobao-drama/latest.json',
-    'https://github.com/chatfire-AI/huobao-drama/releases/latest/download/latest.json',
-  ]
+  : []
 
 const WATCHTOWER_URL = process.env.HUOBAO_WATCHTOWER_URL?.replace(/\/+$/, '')
 const WATCHTOWER_TOKEN = process.env.HUOBAO_WATCHTOWER_TOKEN || ''
@@ -65,6 +62,14 @@ export function getServerUpdateState(): ServerUpdateState {
 
 /** POST /check — 拉取发布清单比较版本（双源依次尝试） */
 export async function checkServerUpdate(): Promise<ServerUpdateState> {
+  if (!FEED_URLS.length) {
+    lastState = {
+      status: 'error',
+      currentVersion: currentVersion(),
+      error: '未配置更新源（HUOBAO_UPDATE_FEED）',
+    }
+    return getServerUpdateState()
+  }
   try {
     let feed: any
     let lastError: unknown

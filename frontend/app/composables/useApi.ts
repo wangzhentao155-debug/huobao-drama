@@ -43,6 +43,24 @@ export const dramaAPI = {
   del: (id: number) => api.del(`/dramas/${id}`),
 }
 
+export const templateAPI = {
+  list: () => api.get('/templates'),
+  get: (id: string) => api.get(`/templates/${id}`),
+  preview: (id: string, agent?: string, stage?: string) => {
+    const qs = new URLSearchParams()
+    if (agent) qs.set('agent', agent)
+    if (stage) qs.set('stage', stage)
+    const suffix = qs.toString()
+    return api.get(`/templates/${id}/preview${suffix ? `?${suffix}` : ''}`)
+  },
+  update: (id: string, data: any) => api.put(`/templates/${id}`, data),
+  restore: (id: string) => api.post(`/templates/${id}/restore`),
+}
+
+export const workflowAPI = {
+  get: (episodeId: number) => api.get(`/episodes/${episodeId}/workflow`),
+}
+
 export const episodeAPI = {
   create: (data: any) => api.post('/episodes', data),
   update: (id: number, data: any) => api.put(`/episodes/${id}`, data),

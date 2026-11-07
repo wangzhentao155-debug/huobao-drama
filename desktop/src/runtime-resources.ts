@@ -63,7 +63,7 @@ export function stageRuntimeResources(resourcesPath: string, options: RuntimeOpt
     .slice(0, 16)
   const candidates = [
     path.join(options.userDataDir, 'runtime'),
-    ...(options.programDataDir ? [path.join(options.programDataDir, 'HuobaoDrama')] : []),
+    ...(options.programDataDir ? [path.join(options.programDataDir, 'AIShortDramaStudio')] : []),
   ].filter(isAsciiPath)
   let lastError: unknown = null
 

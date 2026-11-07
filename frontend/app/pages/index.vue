@@ -120,6 +120,7 @@
           <h2 class="project-name truncate">{{ d.title }}</h2>
           <div class="project-meta">
             <span v-if="d.style" class="tag tag-accent">{{ styleLabel(d.style) }}</span>
+            <span v-if="d.template_id" class="tag">{{ templateLabel(d.template_id) }}</span>
             <span class="dim">{{ t('index.projectMeta', { chars: d.characters?.length || 0, scenes: d.scenes?.length || 0, eps: d.episodes?.length || 0 }) }}</span>
           </div>
           <div class="project-foot dim">
@@ -164,6 +165,11 @@
               <input v-model="form.title" class="input" :placeholder="t('index.createDialog.namePlaceholder')" required autofocus />
             </label>
             <label class="field">
+              <span class="field-label">{{ t('index.createDialog.template') }}</span>
+              <BaseSelect v-model="form.template_id" :options="templateSelectOptions" :placeholder="t('index.createDialog.templatePlaceholder')" />
+              <span v-if="selectedTemplateDesc" class="field-hint">{{ selectedTemplateDesc }}</span>
+            </label>
+            <label class="field">
               <span class="field-label">{{ t('index.createDialog.style') }}</span>
               <BaseSelect v-model="form.style" :options="styleSelectOptions" :placeholder="t('index.createDialog.stylePlaceholder')" searchable />
               <span v-if="selectedStyleDesc" class="field-hint">{{ selectedStyleDesc }}</span>
@@ -202,7 +208,7 @@ import { toast } from 'vue-sonner'
 import { toastError } from '~/composables/useToast'
 import { useI18n } from 'vue-i18n'
 import { Clock, CircleHelp } from 'lucide-vue-next'
-import { dramaAPI, stylePresetAPI } from '~/composables/useApi'
+import { dramaAPI, stylePresetAPI, templateAPI } from '~/composables/useApi'
 import BaseSelect from '~/components/BaseSelect.vue'
 import { startTour, autoTour } from '~/composables/useTour'
 
@@ -221,10 +227,13 @@ const sortOptions = computed(() => ([
 const activeMenuId = ref(null)
 const dramaToDelete = ref(null)
 const deletingDrama = ref(false)
-const form = ref({ title: '', style: '', aspect_ratio: '16:9' })
+const form = ref({ title: '', template_id: '', style: '', aspect_ratio: '16:9' })
 const stylePresets = ref([])
+const templates = ref([])
 const styleSelectOptions = computed(() => stylePresets.value.map(p => ({ label: p.name, value: p.value })))
 const selectedStyleDesc = computed(() => stylePresets.value.find(p => p.value === form.value.style)?.description || '')
+const templateSelectOptions = computed(() => templates.value.map(p => ({ label: p.name, value: p.id })))
+const selectedTemplateDesc = computed(() => templates.value.find(p => p.id === form.value.template_id)?.description || '')
 // 常量数组 label 渲染时求值（语言切换即时生效），value 为逻辑值
 const aspectRatioOptions = computed(() => ([
   { label: t('index.ratio.landscape'), value: '16:9' },
@@ -266,6 +275,9 @@ async function setDramaStatus(d, status) {
 function styleLabel(key) {
   return stylePresets.value.find(p => p.value === key)?.name || key || ''
 }
+function templateLabel(key) {
+  return templates.value.find(p => p.id === key)?.name || key || ''
+}
 
 // 封面：单色灰阶 + 首字符（状态色只以小圆点出现，封面保持中性）
 function coverInitial(d) {
@@ -290,9 +302,13 @@ const filteredDramas = computed(() => {
 async function load() {
   loading.value = true
   try {
-    const [res, presets] = await Promise.all([dramaAPI.list(), stylePresetAPI.list()])
+    const [res, presets, tpls] = await Promise.all([dramaAPI.list(), stylePresetAPI.list(), templateAPI.list()])
     dramas.value = res.items || []
     stylePresets.value = presets || []
+    templates.value = tpls || []
+    if (!form.value.template_id && templates.value.length) {
+      form.value.template_id = templates.value[0].id
+    }
     if (!form.value.style && stylePresets.value.length) {
       form.value.style = stylePresets.value[0].value
     }

@@ -25,9 +25,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DESKTOP = path.resolve(__dirname, '..')
 const RELEASE = path.join(DESKTOP, 'release')
 
-/** 国内下载基址：默认使用安装包 CDN，可被 COS_BASE_URL 覆盖。 */
-const COS_BASE_URL = process.env.COS_BASE_URL || 'https://installer.firemux.site/huobao-drama'
+/** 国内下载基址：仅由 COS_BASE_URL 显式配置；未配置时跳过 COS 通道。 */
+const COS_BASE_URL = process.env.COS_BASE_URL || ''
 const COS_KEY_PREFIX = 'huobao-drama'
+const GITHUB_REPO = process.env.GITHUB_REPO || 'wangzhentao155-debug/huobao-drama'
 
 const pkg = JSON.parse(fs.readFileSync(path.join(DESKTOP, 'package.json'), 'utf8'))
 const version = pkg.version
@@ -39,13 +40,13 @@ const notes = argOf('--notes') || ''
 const skipGh = argv.includes('--skip-gh')
 
 // 与 make-update-feed 相同的产物清单。注意 electron-builder 的 NSIS 本地产物带空格
-// （HuobaoDrama Setup X.Y.Z.exe），GitHub 服务端会规范化为点号；COS key/URL 需自行归一化
+// （AIShortDramaStudio Setup X.Y.Z.exe），GitHub 服务端会规范化为点号；COS key/URL 需自行归一化
 const assets = [
-  `HuobaoDrama-${version}-arm64.dmg`,
-  `HuobaoDrama-${version}.dmg`,
-  `HuobaoDrama-${version}-arm64-mac.zip`,
-  `HuobaoDrama-${version}-mac.zip`,
-  `HuobaoDrama Setup ${version}.exe`,
+  `AIShortDramaStudio-${version}-arm64.dmg`,
+  `AIShortDramaStudio-${version}.dmg`,
+  `AIShortDramaStudio-${version}-arm64-mac.zip`,
+  `AIShortDramaStudio-${version}-mac.zip`,
+  `AIShortDramaStudio Setup ${version}.exe`,
 ]
 // URL/COS key 使用的规范化文件名（空格 → 点号，与 GitHub 服务端一致）
 const dotName = (f) => f.replace(/ /g, '.')
@@ -96,47 +97,55 @@ const buildFeed = async (baseUrl) => {
 }
 
 // GitHub 版(沿用 make-update-feed 的 base-url 约定)
-const ghFeed = await buildFeed(`https://github.com/chatfire-AI/huobao-drama/releases/download/${tag}`)
+const ghFeed = await buildFeed(`https://github.com/${GITHUB_REPO}/releases/download/${tag}`)
 fs.writeFileSync(path.join(RELEASE, 'latest.json'), JSON.stringify(ghFeed, null, 2))
 if (!skipGh) execFileSync('gh', ['release', 'upload', tag, path.join(RELEASE, 'latest.json'), '--clobber'], { stdio: 'inherit' })
 
 // COS 版(桶内固定路径 latest.json,更新器国内源入口)
-const cosFeed = await buildFeed(`${COS_BASE_URL}/v${version}`)
-fs.writeFileSync(path.join(RELEASE, 'latest.cos.json'), JSON.stringify(cosFeed, null, 2))
-console.log(`  ✓ latest.json(GitHub) / latest.cos.json(COS) 平台: ${Object.keys(cosFeed.platforms).join(', ')}`)
+if (COS_BASE_URL) {
+  const cosFeed = await buildFeed(`${COS_BASE_URL}/v${version}`)
+  fs.writeFileSync(path.join(RELEASE, 'latest.cos.json'), JSON.stringify(cosFeed, null, 2))
+  console.log(`  ✓ latest.json(GitHub) / latest.cos.json(COS) 平台: ${Object.keys(cosFeed.platforms).join(', ')}`)
+} else {
+  console.log('  跳过 COS 清单：未配置 COS_BASE_URL')
+}
 
 // ---- 3. COS(国内通道) ----
-console.log('[3/3] 上传腾讯 COS …')
-for (const f of existing) {
-  await cosPut(path.join(RELEASE, f), `${COS_KEY_PREFIX}/v${version}/${dotName(f)}`, {
-    cacheControl: 'public, max-age=2592000', // 安装包按版本命名内容不变,缓存 30 天
+if (!COS_BASE_URL) {
+  console.log('[3/3] 跳过 COS：未配置 COS_BASE_URL')
+} else {
+  console.log('[3/3] 上传腾讯 COS …')
+  for (const f of existing) {
+    await cosPut(path.join(RELEASE, f), `${COS_KEY_PREFIX}/v${version}/${dotName(f)}`, {
+      cacheControl: 'public, max-age=2592000', // 安装包按版本命名内容不变,缓存 30 天
+    })
+    console.log(`  ✓ v${version}/${dotName(f)}`)
+  }
+  await cosPut(path.join(RELEASE, 'latest.cos.json'), `${COS_KEY_PREFIX}/latest.json`, {
+    cacheControl: 'no-cache', // 更新发现入口,必须实时
   })
-  console.log(`  ✓ v${version}/${dotName(f)}`)
-}
-await cosPut(path.join(RELEASE, 'latest.cos.json'), `${COS_KEY_PREFIX}/latest.json`, {
-  cacheControl: 'no-cache', // 更新发现入口,必须实时
-})
-console.log(`  ✓ latest.json (no-cache)`)
+  console.log(`  ✓ latest.json (no-cache)`)
 
-// 官网使用脚本清单跨域加载，无需修改 COS 桶级 CORS。安装包全部上传后才更新。
-const websiteRelease = {
-  version,
-  downloads: {
-    'darwin-arm64': `${COS_BASE_URL}/${tag}/HuobaoDrama-${version}-arm64.dmg`,
-    'darwin-x64': `${COS_BASE_URL}/${tag}/HuobaoDrama-${version}.dmg`,
-    'win32-x64': `${COS_BASE_URL}/${tag}/HuobaoDrama.Setup.${version}.exe`,
-  },
+  // 官网使用脚本清单跨域加载，无需修改 COS 桶级 CORS。安装包全部上传后才更新。
+  const websiteRelease = {
+    version,
+    downloads: {
+      'darwin-arm64': `${COS_BASE_URL}/${tag}/AIShortDramaStudio-${version}-arm64.dmg`,
+      'darwin-x64': `${COS_BASE_URL}/${tag}/AIShortDramaStudio-${version}.dmg`,
+      'win32-x64': `${COS_BASE_URL}/${tag}/AIShortDramaStudio.Setup.${version}.exe`,
+    },
+  }
+  const websiteFeedPath = path.join(RELEASE, 'latest.js')
+  fs.writeFileSync(websiteFeedPath, `window.huobaoDramaRelease(${JSON.stringify(websiteRelease)});\n`)
+  await cosPut(websiteFeedPath, `${COS_KEY_PREFIX}/latest.js`, {
+    cacheControl: 'no-cache',
+    contentType: 'application/javascript; charset=utf-8',
+  })
+  console.log('  ✓ latest.js (官网自动下载清单)')
 }
-const websiteFeedPath = path.join(RELEASE, 'latest.js')
-fs.writeFileSync(websiteFeedPath, `window.huobaoDramaRelease(${JSON.stringify(websiteRelease)});\n`)
-await cosPut(websiteFeedPath, `${COS_KEY_PREFIX}/latest.js`, {
-  cacheControl: 'no-cache',
-  contentType: 'application/javascript; charset=utf-8',
-})
-console.log('  ✓ latest.js (官网自动下载清单)')
 
 console.log(`
 发布完成:
-  海外  https://github.com/chatfire-AI/huobao-drama/releases/${tag}
-  国内  ${COS_BASE_URL}/latest.json
+  海外  https://github.com/${GITHUB_REPO}/releases/${tag}
+${COS_BASE_URL ? `  国内  ${COS_BASE_URL}/latest.json` : '  国内  未配置 COS_BASE_URL，已跳过'}
 `)

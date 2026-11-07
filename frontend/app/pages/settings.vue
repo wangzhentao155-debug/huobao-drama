@@ -78,53 +78,6 @@
             <h2 class="settings-title">{{ t('settings.ai.title') }}</h2>
             <p class="settings-desc">{{ t('settings.ai.desc') }}</p>
           </div>
-          <section class="card quick-card">
-            <div class="quick-card-head">
-              <div class="setup-title">{{ t('settings.ai.quickTitle') }}</div>
-              <span class="tag tag-accent">{{ t('settings.ai.recommended') }}</span>
-            </div>
-            <p class="setup-desc">
-              {{ t('settings.ai.quickDesc') }}
-              <a class="huobao-site-link" :href="huobaoSiteUrl" target="_blank" rel="noopener noreferrer">
-                {{ t('settings.ai.getKey') }}
-                <ExternalLink :size="12" :stroke-width="1.8" />
-              </a>
-            </p>
-            <div class="huobao-quick-row">
-              <input v-model="huobaoApiKey" class="input" type="password" placeholder="Huobao API Key" />
-              <div class="lang-picker">
-                <button
-                  type="button"
-                  :class="['lang-option', { on: huobaoRegion === 'cn' }]"
-                  @click="huobaoRegion = 'cn'"
-                >{{ t('settings.ai.regionCn') }}</button>
-                <button
-                  type="button"
-                  :class="['lang-option', { on: huobaoRegion === 'com' }]"
-                  @click="huobaoRegion = 'com'"
-                >{{ t('settings.ai.regionCom') }}</button>
-              </div>
-              <button class="btn btn-primary" :disabled="huobaoSaving" @click="applyHuobaoQuickConfig">
-                <Loader2 v-if="huobaoSaving" :size="13" class="animate-spin" />
-                <Sparkles v-else :size="13" />
-                {{ t('settings.ai.applyQuick') }}
-              </button>
-            </div>
-            <div class="huobao-quick-models">
-              <div v-for="q in huobaoQuickConfigs" :key="q.name" class="hqm-row">
-                <span class="hqm-label">{{ serviceMeta[q.service_type].label }}</span>
-                <span class="hqm-provider">
-                  <img v-if="providerIconUrl(q.provider)" :src="providerIconUrl(q.provider)" class="hqm-provider-icon" alt="" />
-                  {{ q.provider }}
-                </span>
-                <span class="hqm-models mono">
-                  <span v-for="(m, i) in q.model" :key="m" :class="['hqm-model', { 'is-default': i === 0 }]">
-                    {{ m }}<em v-if="i === 0">{{ t('common.default') }}</em>
-                  </span>
-                </span>
-              </div>
-            </div>
-          </section>
           <section class="card setup-panel">
             <div class="setup-panel-head compact">
               <div>
@@ -227,6 +180,11 @@
         </div>
 
         <!-- ===== 存储位置 ===== -->
+        <!-- ===== 制作模板 ===== -->
+        <div v-else-if="tab === 'templates'" class="settings-scroll">
+          <TemplateManager />
+        </div>
+
         <div v-else-if="tab === 'storage'" class="settings-scroll">
           <div class="settings-head">
             <h2 class="settings-title">{{ t('settings.storage.title') }}</h2>
@@ -497,10 +455,10 @@
           <div class="preset-picker">
             <button
               v-for="preset in presetsByType(cfgForm.service_type)"
-              :key="`${cfgForm.service_type}-${preset.provider}`"
+              :key="`${cfgForm.service_type}-${preset.key}`"
               type="button"
               class="preset-pill"
-              @click="applyProviderPreset(cfgForm.service_type, preset.provider)"
+              @click="applyProviderPreset(cfgForm.service_type, preset.key)"
             >
               {{ preset.label }}
             </button>
@@ -519,6 +477,11 @@
           </label>
           <label class="field"><span class="field-label">API Key</span><input v-model="cfgForm.api_key" class="input" type="password" placeholder="sk-..." /></label>
           <label class="field"><span class="field-label">Base URL</span><input v-model="cfgForm.base_url" class="input" placeholder="https://..." /></label>
+          <label v-if="isCustomProtocol" class="field">
+            <span class="field-label">协议适配</span>
+            <BaseSelect v-model="cfgForm.endpoint" :options="customProtocolOptions" placeholder="选择协议适配器" />
+            <span class="field-hint">自定义服务按所选协议组装请求；Base URL 会原样使用</span>
+          </label>
           <div class="field">
             <span class="field-label">{{ t('settings.cfg.models') }}</span>
             <div v-if="cfgForm.models.length" class="model-chips">
@@ -684,7 +647,7 @@
 </template>
 
 <script setup>
-import { Plus, Pencil, Trash2, FileText, ChevronDown, Check, Loader2, Bot, Cpu, Sparkles, Palette, ExternalLink, Star, HardDrive, Database, RefreshCw, Download, Languages, SunMoon, X } from 'lucide-vue-next'
+import { Plus, Pencil, Trash2, FileText, ChevronDown, Check, Loader2, Bot, Cpu, Sparkles, Palette, Star, HardDrive, Database, RefreshCw, Download, Languages, SunMoon, X, LayoutTemplate } from 'lucide-vue-next'
 import BaseSelect from '~/components/BaseSelect.vue'
 import { toast } from 'vue-sonner'
 import { toastError } from '~/composables/useToast'
@@ -705,7 +668,8 @@ const baseTabs = computed(() => [
   { id: 'ai', label: t('settings.tabs.ai'), icon: Cpu },
   { id: 'general', label: t('settings.tabs.general'), icon: Languages },
   { id: 'styles', label: t('settings.tabs.styles'), icon: Palette },
-  { id: 'agents', label: t('settings.tabs.agents'), icon: Bot },
+  // Agent 配置页保留（高级维护入口，页面与文件仍在），日常按模式调整请用「制作模板」
+  { id: 'templates', label: t('settings.tabs.templates'), icon: LayoutTemplate },
   { id: 'storage', label: t('settings.tabs.storage'), icon: HardDrive },
   { id: 'about', label: t('settings.tabs.about'), icon: RefreshCw },
 ])
@@ -716,12 +680,7 @@ const cfgDialog = ref(false)
 const cfgEditId = ref(null)
 const cfgTesting = ref(false)
 const cfgTestResult = ref(null)
-const huobaoApiKey = ref('')
-const huobaoSaving = ref(false)
-// 火宝节点选择：默认跟随界面语言（中文→国内 .cn，其他→国外 .com），一键配置与取 Key 链接共用
-const huobaoRegion = ref(locale.value?.startsWith('zh') ? 'cn' : 'com')
-const huobaoSiteUrl = computed(() => `https://api.firemux.${huobaoRegion.value}`)
-const cfgForm = reactive({ name: '', provider: '', api_key: '', base_url: '', models: [], service_type: 'text', priority: 0, temperature: '' })
+const cfgForm = reactive({ name: '', provider: '', api_key: '', base_url: '', models: [], service_type: 'text', endpoint: '', priority: 0, temperature: '' })
 // 模型标签编辑器：首位即默认模型；输入框支持回车添加、逗号/换行批量粘贴
 const modelInput = ref('')
 function addModel() {
@@ -749,54 +708,67 @@ const serviceTypes = computed(() => [
   { type: 'image', label: t('common.serviceType.image') },
   { type: 'video', label: t('common.serviceType.video') },
 ])
-const providers = ['gemini', 'openai', 'volcengine', 'minimax', 'aliyun']
+const providers = ['gemini', 'openai', 'deepseek', 'volcengine', 'minimax', 'aliyun', 'custom']
 const providerSelectOptions = computed(() => providers.map(p => ({ label: p, value: p })))
+/** 自定义图片/视频服务的协议适配器（存 endpoint） */
+const customProtocolOptions = computed(() => {
+  if (cfgForm.service_type === 'image') return [
+    { label: 'OpenAI Images 兼容', value: 'openai' },
+    { label: 'Gemini 原生', value: 'gemini' },
+    { label: '火山引擎', value: 'volcengine' },
+  ]
+  if (cfgForm.service_type === 'video') return [
+    { label: '阿里云 Wan', value: 'aliyun' },
+    { label: '火山引擎 Seedance', value: 'volcengine' },
+    { label: 'MiniMax H3', value: 'minimax' },
+  ]
+  return []
+})
+const isCustomProtocol = computed(() => cfgForm.provider === 'custom' && cfgForm.service_type !== 'text')
+watch(() => cfgForm.provider, (provider) => {
+  if (provider === 'custom' && cfgForm.service_type !== 'text' && !cfgForm.endpoint) {
+    cfgForm.endpoint = cfgForm.service_type === 'image' ? 'openai' : 'aliyun'
+  }
+})
 const serviceMeta = computed(() => ({
   text: { label: t('common.serviceType.text'), desc: t('settings.ai.meta.text') },
   image: { label: t('common.serviceType.image'), desc: t('settings.ai.meta.image') },
   video: { label: t('common.serviceType.video'), desc: t('settings.ai.meta.video') },
 }))
 const providerPresets = {
-  text: {
-    gemini: { label: 'Gemini 官方', baseUrl: 'https://generativelanguage.googleapis.com', models: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] },
-    openai: { label: 'OpenAI 官方', baseUrl: 'https://api.openai.com', models: ['deepseek-v4-pro', 'gpt-5.6-terra'] },
-  },
-  image: {
-    gemini: { label: 'Gemini 官方', baseUrl: 'https://generativelanguage.googleapis.com', models: ['gemini-3-pro-image', 'gemini-3.1-flash-image'] },
-    openai: { label: 'OpenAI 官方', baseUrl: 'https://api.openai.com', models: ['gpt-image-2'] },
-  },
-  video: {
-    aliyun: { label: '阿里云百炼 Wan 3.0', baseUrl: 'https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com', models: ['wan3.0-video', 'wan3.0-video-prime'] },
-    volcengine: { label: 'Seedance 2.0 官方', baseUrl: 'https://ark.cn-beijing.volces.com', models: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'] },
-    minimax: { label: 'MiniMax H3 官方', baseUrl: 'https://api.minimaxi.com', models: ['MiniMax-H3'] },
-  },
+  text: [
+    { key: 'deepseek', provider: 'deepseek', label: 'DeepSeek 官方', baseUrl: 'https://api.deepseek.com', models: ['deepseek-v4-pro', 'deepseek-flash'] },
+    { key: 'qwen', provider: 'openai', label: '通义千问', baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1', models: ['qwen3.8-max', 'qwen3.8-plus', 'qwen3.8-flash'] },
+    { key: 'kimi', provider: 'openai', label: 'Kimi', baseUrl: 'https://api.moonshot.cn/v1', models: ['kimi-k3', 'kimi-k3.1-pro', 'kimi-k3.1-pro-highspeed'] },
+    { key: 'glm', provider: 'custom', label: '智谱 GLM', baseUrl: 'https://open.bigmodel.cn/api/paas/v4', models: ['glm-5.3', 'glm-5.3-flash'] },
+    { key: 'doubao', provider: 'volcengine', label: '豆包 (火山方舟)', baseUrl: 'https://ark.cn-beijing.volces.com', models: ['doubao-seed-2-1-pro-260628', 'doubao-seed-2-1-turbo-260628'] },
+    { key: 'gemini', provider: 'gemini', label: 'Gemini 官方', baseUrl: 'https://generativelanguage.googleapis.com', models: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'] },
+    { key: 'openai', provider: 'openai', label: 'OpenAI 官方', baseUrl: 'https://api.openai.com', models: ['deepseek-v4-pro', 'gpt-5.6-terra'] },
+    { key: 'custom', provider: 'custom', label: '自定义', baseUrl: '', models: [] },
+  ],
+  image: [
+    { key: 'gemini', provider: 'gemini', label: 'Gemini 官方', baseUrl: 'https://generativelanguage.googleapis.com', models: ['gemini-3-pro-image', 'gemini-3.1-flash-image'] },
+    { key: 'openai', provider: 'openai', label: 'OpenAI 官方', baseUrl: 'https://api.openai.com', models: ['gpt-image-2'] },
+    { key: 'custom', provider: 'custom', label: '自定义', baseUrl: '', models: [], endpoint: 'openai' },
+  ],
+  video: [
+    { key: 'aliyun', provider: 'aliyun', label: '阿里云百炼 Wan 3.0', baseUrl: 'https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com', models: ['wan3.0-video', 'wan3.0-video-prime'] },
+    { key: 'volcengine', provider: 'volcengine', label: 'Seedance 2.0 官方', baseUrl: 'https://ark.cn-beijing.volces.com', models: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'] },
+    { key: 'minimax', provider: 'minimax', label: 'MiniMax H3 官方', baseUrl: 'https://api.minimaxi.com', models: ['MiniMax-H3'] },
+    { key: 'custom', provider: 'custom', label: '自定义', baseUrl: '', models: [], endpoint: 'aliyun' },
+  ],
 }
-const huobaoQuickConfigs = computed(() => {
-  const base = huobaoSiteUrl.value
-  return [
-    { service_type: 'text', provider: 'gemini', name: '火宝文本服务 · Gemini', base_url: base, model: ['gemini-3.8-flash', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'], priority: 101 },
-    { service_type: 'text', provider: 'openai', name: '火宝文本服务 · OpenAI', base_url: base, model: ['deepseek-v4-pro', 'deepseek-v4-flash', 'gpt-5.6-terra'], priority: 100 },
-    { service_type: 'image', provider: 'openai', name: '火宝图片服务 · OpenAI', base_url: base, model: ['gpt-image-2'], priority: 99 },
-    { service_type: 'image', provider: 'gemini', name: '火宝图片服务 · Gemini', base_url: base, model: ['gemini-3-pro-image', 'gemini-3.1-flash-image'], priority: 97 },
-    { service_type: 'video', provider: 'aliyun', name: '火宝视频服务 · Wan 3.0', base_url: `${base}/qwen`, model: ['wan3.0-video', 'wan3.0-video-prime'], priority: 97 },
-    { service_type: 'video', provider: 'volcengine', name: '火宝视频服务 · Seedance', base_url: `${base}/volcengine`, model: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'], priority: 96 },
-    { service_type: 'video', provider: 'minimax', name: '火宝视频服务 · MiniMax', base_url: `${base}/minimax`, model: ['MiniMax-H3'], priority: 98 },
-  ]
-})
-
 function byType(t) { return cfgs.value.filter(c => c.service_type === t) }
 function countActive(t) { return byType(t).filter(c => c.is_active).length }
 function fmtModel(m) { return Array.isArray(m) ? m.join(', ') : m || '—' }
-function presetsByType(type) {
-  const group = providerPresets[type] || {}
-  return Object.entries(group).map(([provider, preset]) => ({ provider, ...preset }))
-}
-function applyProviderPreset(type, provider) {
-  const preset = providerPresets[type]?.[provider]
+function presetsByType(type) { return providerPresets[type] || [] }
+function applyProviderPreset(type, presetKey) {
+  const preset = (providerPresets[type] || []).find(p => p.key === presetKey)
   if (!preset) return
-  cfgForm.provider = provider
+  cfgForm.provider = preset.provider
   cfgForm.base_url = preset.baseUrl
   cfgForm.models = [...preset.models]
+  cfgForm.endpoint = preset.endpoint || ''
   // 配置名持久化进 DB：用 provider 英文 + 服务类型英文标识拼，不随界面语言漂移
   cfgForm.name = `${preset.label}-${type}`
 }
@@ -837,32 +809,12 @@ async function setDefaultModel(type, c, m) {
 }
 async function toggleCfg(c) { await aiConfigAPI.update(c.id, { is_active: !c.is_active }); loadCfgs() }
 async function delCfg(id) { await aiConfigAPI.del(id); toast.success(t('index.deleted')); loadCfgs() }
-async function applyHuobaoQuickConfig() {
-  const apiKey = huobaoApiKey.value.trim()
-  if (!apiKey) { toast.warning(t('settings.ai.apiKeyRequired')); return }
-  huobaoSaving.value = true
-  try {
-    for (const preset of huobaoQuickConfigs.value) {
-      const payload = { ...preset, api_key: apiKey }
-      const existing = cfgs.value.find(c => c.name === preset.name || (c.service_type === preset.service_type && c.provider === preset.provider && c.base_url === preset.base_url))
-      if (existing) await aiConfigAPI.update(existing.id, payload)
-      else await aiConfigAPI.create(payload)
-    }
-    toast.success(t('settings.ai.quickApplied'))
-    huobaoApiKey.value = ''
-    await loadCfgs()
-  } catch (e) {
-    toastError(e)
-  } finally {
-    huobaoSaving.value = false
-  }
-}
 function startAddCfg(t) {
   cfgEditId.value = null
   cfgTestResult.value = null
-  Object.assign(cfgForm, { name: '', provider: '', api_key: '', base_url: '', models: [], service_type: t, priority: 0, temperature: '' })
+  Object.assign(cfgForm, { name: '', provider: '', api_key: '', base_url: '', models: [], service_type: t, endpoint: '', priority: 0, temperature: '' })
   const firstPreset = presetsByType(t)[0]
-  if (firstPreset) applyProviderPreset(t, firstPreset.provider)
+  if (firstPreset) applyProviderPreset(t, firstPreset.key)
   cfgDialog.value = true
 }
 function startEditCfg(c) {
@@ -875,6 +827,7 @@ function startEditCfg(c) {
     base_url: c.base_url || '',
     models: Array.isArray(c.model) ? [...c.model] : String(c.model || '').split(',').map(s => s.trim()).filter(Boolean),
     service_type: c.service_type,
+    endpoint: c.endpoint || '',
     priority: c.priority ?? 0,
     temperature: c.temperature ?? '',
   })
@@ -899,6 +852,7 @@ async function testDraftCfg() {
     api_key: cfgForm.api_key,
     base_url: cfgForm.base_url,
     model: [...cfgForm.models],
+    endpoint: cfgForm.endpoint,
   })
 }
 async function testExistingCfg(c) {
@@ -909,18 +863,20 @@ async function testExistingCfg(c) {
     api_key: c.api_key || '',
     base_url: c.base_url || '',
     model: Array.isArray(c.model) ? c.model : [],
+    endpoint: c.endpoint || '',
   })
 }
 async function saveCfg() {
   if (!cfgForm.provider) { toast.warning(t('settings.cfg.providerRequired')); return }
+  if (isCustomProtocol.value && !cfgForm.endpoint) { toast.warning('请选择协议适配'); return }
   const models = [...cfgForm.models]
   const temperature = cfgForm.temperature === '' || cfgForm.temperature === null ? null : Number(cfgForm.temperature)
   if (temperature !== null && (!Number.isFinite(temperature) || temperature < 0 || temperature > 2)) {
     toast.warning(t('settings.cfg.tempInvalid')); return
   }
   try {
-    if (cfgEditId.value) await aiConfigAPI.update(cfgEditId.value, { name: cfgForm.name, provider: cfgForm.provider, api_key: cfgForm.api_key, base_url: cfgForm.base_url, model: models, priority: cfgForm.priority, temperature })
-    else await aiConfigAPI.create({ service_type: cfgForm.service_type, provider: cfgForm.provider, name: cfgForm.name || `${cfgForm.provider}-${cfgForm.service_type}`, api_key: cfgForm.api_key, base_url: cfgForm.base_url, model: models, priority: cfgForm.priority, temperature })
+    if (cfgEditId.value) await aiConfigAPI.update(cfgEditId.value, { name: cfgForm.name, provider: cfgForm.provider, api_key: cfgForm.api_key, base_url: cfgForm.base_url, model: models, priority: cfgForm.priority, temperature, ...(isCustomProtocol.value ? { endpoint: cfgForm.endpoint } : {}) })
+    else await aiConfigAPI.create({ service_type: cfgForm.service_type, provider: cfgForm.provider, name: cfgForm.name || `${cfgForm.provider}-${cfgForm.service_type}`, api_key: cfgForm.api_key, base_url: cfgForm.base_url, model: models, priority: cfgForm.priority, temperature, ...(isCustomProtocol.value ? { endpoint: cfgForm.endpoint } : {}) })
     cfgDialog.value = false; toast.success(t('common.saved')); loadCfgs()
   } catch (e) { toastError(e) }
 }
@@ -1225,9 +1181,8 @@ async function saveStyle() {
 
 onMounted(() => { loadCfgs(); loadAgents(); loadAllSkills(); loadAgentPrompt(selectedAgent.value); loadStylePresets() })
 
-// ===== 应用内引导（设置页）：快捷配置 + 手动模板两步 =====
+// ===== 应用内引导（设置页）：导航 + 手动模板 =====
 const SETTINGS_TOUR = [
-  { element: '.quick-card', titleKey: 'tour.settings.quick.title', descKey: 'tour.settings.quick.desc', popoverSide: 'bottom' },
   { element: '.nav-item:has(.lucide-cpu), .nav-item:nth-of-type(1)', titleKey: 'tour.settings.nav.title', descKey: 'tour.settings.nav.desc', popoverSide: 'right' },
 ]
 onMounted(() => setTimeout(() => autoTour('settings', SETTINGS_TOUR, t), 800))
@@ -1428,7 +1383,7 @@ onBeforeUnmount(stopUsagePoll)
 .settings-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
 .settings-desc { font-size: 13px; color: var(--text-2); margin-top: 6px; }
 
-/* 火宝快捷配置 */
+/* 服务模板 */
 .quick-card {
   padding: 20px;
   margin-bottom: 16px;

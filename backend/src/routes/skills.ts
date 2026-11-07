@@ -14,6 +14,25 @@ const normalizeLang = (v?: string) => (v && LANGS.includes(v) ? v : 'zh')
 const skillFile = (id: string, lang?: string) => `skills/${id}/SKILL${lang && lang !== 'zh' ? `.${lang}` : ''}.md`
 const SKILL_ID_SEGMENT = /^[a-z0-9-]+$/
 
+/** 编辑/删除前把当前技能内容备份到 workspace/skill-backups/（首次同时保留 default） */
+async function backupSkill(id: string, lang?: string) {
+  try {
+    const source = skillFile(id, lang)
+    if (!await fsm().exists(source)) return
+    const content = String(await fsm().readFile(source, { encoding: 'utf-8' }))
+    const safe = id.replace(/\//g, '__')
+    const dir = 'skill-backups'
+    const defaultPath = `${dir}/${safe}-default.md`
+    if (!await fsm().exists(defaultPath)) {
+      await fsm().writeFile(defaultPath, content, { recursive: true })
+    }
+    const ts = new Date().toISOString().replace(/[:.]/g, '-')
+    await fsm().writeFile(`${dir}/${safe}-${ts}.md`, content, { recursive: true })
+  } catch {
+    // 备份失败不阻断编辑
+  }
+}
+
 // GET /skills?lang= — List all skills (经 workspace.skills 原生发现)
 // lang 非 zh 且变体存在时，名称/描述取自语言变体 frontmatter（缺失则回退基础版）
 app.get('/', async (c) => {
@@ -54,6 +73,7 @@ app.put('/*', async (c) => {
   const body = await c.req.json()
   const lang = normalizeLang(c.req.query('lang') ?? body.lang)
   if (lang !== 'zh' && !await fsm().exists(skillFile(id))) return badRequest(c, '技能不存在')
+  await backupSkill(id, lang)
   await fsm().writeFile(skillFile(id, lang), body.content, { recursive: true })
   // 目录 mtime 不会因文件内容编辑而更新（APFS），显式刷新技能缓存；语言变体直读无需刷新
   if (lang === 'zh') await refreshSkillWorkspaces()
@@ -91,6 +111,7 @@ Write your skill content here.
 app.delete('/*', async (c) => {
   const id = c.req.path.slice('/api/v1/skills/'.length)
   if (!await fsm().exists(`skills/${id}`)) return badRequest(c, '技能不存在')
+  await backupSkill(id)
   await fsm().rmdir(`skills/${id}`, { recursive: true })
   await refreshSkillWorkspaces()
   return success(c)

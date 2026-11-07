@@ -1,10 +1,10 @@
 # 生产级制作链路重构 · 项目记录
 
-> 项目：火宝短剧（Huobao Drama）  
-> 记录日期：2026-11-08  
-> 代码基线：`master @ b48e6b2`，工作区有 47 项未提交改动（模板/模式/编辑器等）  
-> 目标版本：`4.1.0`；当前构建版本：`4.1.0-p0`  
-> 当前状态：P0 全部完成（P0-01..P0-08），P1 未开始  
+> 项目：AI 短剧制作平台（Huobao Drama 二次开发）
+> 记录日期：2026-11-08
+> 代码基线：`master @ b48e6b2`，工作区有 47 项未提交改动（模板/模式/编辑器等）
+> 目标版本：`4.1.0`；当前构建版本：`4.1.0-p0`
+> 当前状态：P0 全部完成（P0-01..P0-08），P1 未开始
 > 唯一事实源：本文件。README / CLAUDE.md 是项目说明，不是本重构的进度源。
 
 ---
@@ -228,6 +228,21 @@ npm run verify:release    # 版本 + 类型检查 + 模板校验 + 技能审计 
 | 不包含 | `node_modules`、`.git`、`data/static`、构建产物 |
 
 恢复步骤见备份目录内 `MANIFEST.md`。
+
+### 2.8 品牌与 SaaS 清理（二次开发）
+
+| 项 | 处理 |
+|---|---|
+| 显示名 | `AI 短剧制作平台` / `AI Short Drama Studio` |
+| 原品牌字样 | 移除「火宝」显示字样；内部 `HUOBAO_*`、`huobao.sqlite3`、包名保留 |
+| 快捷配置 | 设置页入口、节点选择、Key 写入逻辑、4 语言文案键全部删除 |
+| 原 SaaS | 移除 `api.firemux.*`、`installer.firemux.site`；更新检查默认不连任何源，仅 `HUOBAO_UPDATE_FEED` 显式启用 |
+| 桌面产品名 | `productName: AIShortDramaStudio`，`appId: com.aishortdrama.studio` |
+| 安装包 | `AIShortDramaStudio-<version>-*.dmg` / `.zip` / `AIShortDramaStudio Setup <version>.exe` |
+| userData | 新安装使用 `AIShortDramaStudio`；已有 `HuobaoDrama` 目录继续复用，避免大体积数据搬迁 |
+| 上游链接 | 应用内 GitHub、README clone 地址、更新 feed 默认仓库改为 `wangzhentao155-debug/huobao-drama` |
+
+验证：前端重新构建；内置浏览器确认标题、手动模板、无快捷配置；前端测试 6/6；后端类型检查；健康检查 `4.1.0-p0`。
 
 ---
 
@@ -470,6 +485,7 @@ log_layer_breakdown()
 | 2026-11-08 | P0-07 | 共性规矩 | `skills/shared/project-facts/SKILL.md`、policy schema | policy 支持 shared；urban 5 阶段各 3 个技能块 | 完成 |
 | 2026-11-08 | P0-08 | 影子装配 | `scripts/shadow-assemble.ts`、`assembleShadow()` | 8 套 × 5 阶段；0 失败；旧模板全部 same | 完成 |
 | 2026-11-08 | P0 收口 | 模板版本与最终校验 | `templates/urban-realistic/template.json` | urban 1.0.3 → 1.1.0；verify:release + verify:health 通过 | 完成 |
+| 2026-11-08 | 品牌清理 | 移除原品牌/SaaS/快捷配置；productName 与安装包改名 | `settings.vue`、`server-update.ts`、`updater.ts`、`electron-builder.yml`、README、locales | 前端构建；UI 无快捷配置；前端测试 6/6；typecheck | 完成 |
 
 ---
 

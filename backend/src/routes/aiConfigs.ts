@@ -4,7 +4,7 @@ import { db, getInsertId, schema } from '../db/index.js'
 import { success, notFound, created, badRequest, now } from '../utils/response.js'
 import { toSnakeCase } from '../utils/transform.js'
 import { joinProviderUrl } from '../services/adapters/url.js'
-import { isOfficialProvider, parseConfigTemperature } from '../services/ai.js'
+import { isOfficialProvider, parseConfigTemperature, customProtocols } from '../services/ai.js'
 import { redactUrl, logTaskError, logTaskProgress, logTaskSuccess } from '../utils/task-logger.js'
 
 const app = new Hono()
@@ -42,9 +42,30 @@ function geminiHeaders(apiKey?: string, withJson = false) {
   return headers
 }
 
-function buildProbe(serviceType: string, provider: string, baseUrl: string, model?: string, apiKey?: string) {
+/** 自定义图片/视频服务必须选择一个协议适配器（存 endpoint 字段） */
+function validateCustomProtocol(serviceType?: string | null, provider?: string | null, endpoint?: string | null): string | null {
+  if ((provider || '').toLowerCase() !== 'custom') return null
+  if (serviceType === 'text') return null
+  const allowed = customProtocols[serviceType as 'image' | 'video']
+  if (!allowed) return null
+  const protocol = (endpoint || '').toLowerCase()
+  if (!allowed.includes(protocol)) {
+    return `自定义服务需要选择协议适配（${allowed.join(' / ')}）`
+  }
+  return null
+}
+
+function buildProbe(serviceType: string, provider: string, baseUrl: string, model?: string, apiKey?: string, endpoint?: string | null) {
   const p = provider.toLowerCase()
   const m = model || ''
+
+  // 自定义图片/视频：按 endpoint 指定的协议走对应探针
+  if (p === 'custom' && serviceType !== 'text') {
+    const protocol = (endpoint || '').toLowerCase()
+    if (protocol && protocol !== 'custom') {
+      return buildProbe(serviceType, protocol, baseUrl, model, apiKey)
+    }
+  }
 
   if (p === 'gemini') {
     // 探针统一走 generateContent:文本运行时(AI SDK)走的就是它,官方与中转站都支持;
@@ -84,6 +105,15 @@ function buildProbe(serviceType: string, provider: string, baseUrl: string, mode
     }
   }
 
+  if (p === 'deepseek') {
+    return {
+      method: 'GET',
+      url: joinProviderUrl(baseUrl, '', '/models'),
+      headers: bearerHeaders(apiKey),
+      body: undefined,
+    }
+  }
+
   if (p === 'minimax') {
     // MiniMax 仅提供视频服务，空请求体探测鉴权/端点连通性
     return {
@@ -104,6 +134,22 @@ function buildProbe(serviceType: string, provider: string, baseUrl: string, mode
         'X-DashScope-Async': 'enable',
       },
       body: {},
+    }
+  }
+
+  if (p === 'custom') {
+    // 自定义 OpenAI 兼容端点：base_url 原样使用，直接探测 chat/completions。
+    // 用 max_tokens=1 的最小请求，既能验证路径/鉴权，又几乎不消耗额度。
+    return {
+      method: 'POST',
+      url: `${(baseUrl || '').replace(/\/+$/, '')}/chat/completions`,
+      headers: bearerHeaders(apiKey, true),
+      body: {
+        model: m,
+        messages: [{ role: 'user', content: 'ping' }],
+        max_tokens: 1,
+        stream: false,
+      },
     }
   }
 
@@ -137,6 +183,8 @@ app.post('/', async (c) => {
   if (!isOfficialProvider(body.service_type, body.provider)) {
     return badRequest(c, '不支持的 service_type/provider')
   }
+  const customError = validateCustomProtocol(body.service_type, body.provider, body.endpoint)
+  if (customError) return badRequest(c, customError)
 
   let temperature: number | null = null
   if ('temperature' in body) {
@@ -154,6 +202,7 @@ app.post('/', async (c) => {
     baseUrl: body.base_url || '',
     apiKey: body.api_key || '',
     model: JSON.stringify(body.model || []),
+    endpoint: body.endpoint || null,
     priority: body.priority || 0,
     isActive: true,
     settings: temperature !== null ? JSON.stringify({ temperature }) : null,
@@ -176,9 +225,11 @@ app.post('/test', async (c) => {
   if (!isOfficialProvider(body.service_type, body.provider)) {
     return badRequest(c, '不支持的 service_type/provider')
   }
+  const customError = validateCustomProtocol(body.service_type, body.provider, body.endpoint)
+  if (customError) return badRequest(c, customError)
 
   const model = Array.isArray(body.model) ? body.model[0] : body.model
-  const probe = buildProbe(body.service_type, body.provider, body.base_url, model, body.api_key)
+  const probe = buildProbe(body.service_type, body.provider, body.base_url, model, body.api_key, body.endpoint)
   const probeUrl = redactUrl(probe.url)
 
   logTaskProgress('AIConfig', 'probe-start', {
@@ -259,6 +310,9 @@ app.put('/:id', async (c) => {
   if (!isOfficialProvider(serviceType, provider)) {
     return badRequest(c, '不支持的 service_type/provider')
   }
+  const endpoint = 'endpoint' in body ? body.endpoint : existing.endpoint
+  const customError = validateCustomProtocol(serviceType, provider, endpoint)
+  if (customError) return badRequest(c, customError)
 
   const updates: Record<string, any> = { updatedAt: now() }
 
@@ -267,6 +321,7 @@ app.put('/:id', async (c) => {
   if ('name' in body) updates.name = body.name
   if ('base_url' in body) updates.baseUrl = body.base_url
   if ('api_key' in body) updates.apiKey = body.api_key
+  if ('endpoint' in body) updates.endpoint = body.endpoint || null
   if ('model' in body) updates.model = JSON.stringify(body.model)
   if ('priority' in body) updates.priority = body.priority
   if ('is_active' in body) updates.isActive = body.is_active

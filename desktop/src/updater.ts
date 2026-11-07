@@ -1,8 +1,7 @@
 /**
  * 应用内更新器（无 Apple 签名方案，同 Tauri updater 思路）
  *
- * - 清单：HUOBAO_UPDATE_FEED；未设置时双源 —— 国内 COS 优先，GitHub Releases 兜底
- *   （两个源返回同一份清单结构，仅下载 URL 域名不同，见 desktop/scripts/publish-release.mjs）
+ * - 清单：仅使用 HUOBAO_UPDATE_FEED；未配置时更新检查返回未配置状态
  * - macOS：下载 zip（.app 归档）→ sha256 校验 → 解压 → 旧包改名 .old 备胎 → 新包就位
  *   → `open` 拉起新应用 → 当前实例退出；下次启动清理 .old
  * - Windows：下载 Setup.exe → sha256 校验 → detached 静默安装（/S）→ 当前实例退出
@@ -16,13 +15,10 @@ import * as path from 'path'
 import crypto from 'crypto'
 import { spawn, execFile } from 'child_process'
 
-// 双源：COS（国内直连）优先，GitHub（海外）兜底；HUOBAO_UPDATE_FEED 可整体覆盖
+// 二次开发默认不连原项目更新源；需要更新时显式配置 HUOBAO_UPDATE_FEED
 const FEED_URLS = process.env.HUOBAO_UPDATE_FEED
   ? [process.env.HUOBAO_UPDATE_FEED]
-  : [
-    'https://installer.firemux.site/huobao-drama/latest.json',
-    'https://github.com/chatfire-AI/huobao-drama/releases/latest/download/latest.json',
-  ]
+  : []
 
 export interface UpdateState {
   status: 'idle' | 'checking' | 'up-to-date' | 'available' | 'downloading' | 'downloaded' | 'error'
@@ -74,11 +70,12 @@ function platformKey(): string {
 
 /** 已安装 app 的 .app 路径（仅 macOS、打包态有效） */
 function installedAppBundle(): string {
-  // process.execPath = .../HuobaoDrama.app/Contents/MacOS/HuobaoDrama
+  // process.execPath = .../AIShortDramaStudio.app/Contents/MacOS/AIShortDramaStudio
   return path.resolve(path.dirname(process.execPath), '..', '..')
 }
 
 async function fetchFeed(): Promise<{ version: string, notes?: string, platforms: Record<string, { url: string, sha256: string, size?: number }> }> {
+  if (!FEED_URLS.length) throw new Error('未配置更新源（HUOBAO_UPDATE_FEED）')
   let lastError: unknown
   for (const url of FEED_URLS) {
     try {
@@ -179,10 +176,10 @@ async function doDownload(): Promise<UpdateState> {
 function describeApplyError(err: unknown): string {
   const e = err as NodeJS.ErrnoException
   if (e?.code === 'EPERM' || e?.code === 'EACCES') {
-    return `系统权限不足（${e.code}）：请在 系统设置 → 隐私与安全性 → App 管理 中允许 HuobaoDrama 后重试；或下载最新 dmg 覆盖安装（数据不受影响）`
+    return `系统权限不足（${e.code}）：请在 系统设置 → 隐私与安全性 → App 管理 中允许 AIShortDramaStudio 后重试；或下载最新 dmg 覆盖安装（数据不受影响）`
   }
   if (e?.code === 'EROFS') {
-    return '应用正运行在只读位置（可能直接在 dmg 挂载卷里），请先把 HuobaoDrama 拖入「应用程序」再更新'
+    return '应用正运行在只读位置（可能直接在 dmg 挂载卷里），请先把 AIShortDramaStudio 拖入「应用程序」再更新'
   }
   return e?.message || String(err)
 }
@@ -201,8 +198,8 @@ async function doApply(): Promise<void> {
       await new Promise<void>((resolve, reject) => {
         execFile('unzip', ['-q', '-o', downloaded, '-d', tmpExtract], err => (err ? reject(err) : resolve()))
       })
-      const newApp = path.join(tmpExtract, 'HuobaoDrama.app')
-      if (!fs.existsSync(newApp)) throw new Error('更新包内容异常（未找到 HuobaoDrama.app）')
+      const newApp = path.join(tmpExtract, 'AIShortDramaStudio.app')
+      if (!fs.existsSync(newApp)) throw new Error('更新包内容异常（未找到 AIShortDramaStudio.app）')
 
       const oldBundle = `${bundle}.old`
       fs.rmSync(oldBundle, { recursive: true, force: true })

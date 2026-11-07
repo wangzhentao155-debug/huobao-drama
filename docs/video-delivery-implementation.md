@@ -14,7 +14,7 @@
 
 | 部分 | 实现 | 交付位置 |
 | --- | --- | --- |
-| Firemux | MiniMax 后台转存、租约抢占、有限重试、签名链接、交付恢复接口 | 相邻 firemux 仓库的 gateway/delivery |
+| 外部交付网关（可选） | MiniMax 后台转存、租约抢占、有限重试、签名链接、交付恢复接口 | 由部署方自行接入 |
 | 短剧后端 | 保存任务来源和生成结果、原子下载、恢复接口、启动恢复、诊断接口 | backend/src/services/generation.ts、video-download.ts |
 | 短剧前端 | URL 在线预览及链接、本地视频自动切换、单条与批量恢复、显式重新生成确认、持续状态同步、复制诊断 | frontend/app/views/drama/episode.vue |
 

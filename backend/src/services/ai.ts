@@ -14,6 +14,8 @@ export interface AIConfig {
   baseUrl: string
   apiKey: string
   model: string
+  /** 自定义 provider 的协议适配器（openai/gemini/volcengine 或 aliyun/volcengine/minimax） */
+  endpoint?: string | null
   /** 采样温度，null 表示不设置（跟随服务商默认）。存于 ai_service_configs.settings JSON */
   temperature?: number | null
 }
@@ -30,9 +32,23 @@ export function parseConfigTemperature(settingsRaw: string | null | undefined): 
 }
 
 export const officialProviders: Record<ServiceType, readonly string[]> = {
-  text: ['openai', 'gemini', 'volcengine'],
+  // custom: 任意端点。文本按 OpenAI 兼容协议直接调用；图片/视频通过 endpoint 指定协议适配器
+  text: ['openai', 'gemini', 'volcengine', 'deepseek', 'custom'],
+  image: ['openai', 'gemini', 'volcengine', 'custom'],
+  video: ['volcengine', 'minimax', 'aliyun', 'custom'],
+}
+
+/** 自定义服务可选的协议适配器 */
+export const customProtocols: Record<'image' | 'video', readonly string[]> = {
   image: ['openai', 'gemini', 'volcengine'],
-  video: ['volcengine', 'minimax', 'aliyun'],
+  video: ['aliyun', 'volcengine', 'minimax'],
+}
+
+/** 实际用于选择 Adapter 的协议：custom 取 endpoint，其余取 provider */
+export function resolveProtocol(config: { provider: string; endpoint?: string | null }): string {
+  const provider = (config.provider || '').toLowerCase()
+  if (provider !== 'custom') return provider
+  return (config.endpoint || '').toLowerCase()
 }
 
 export function isOfficialProvider(serviceType?: string | null, provider?: string | null): boolean {
@@ -42,6 +58,11 @@ export function isOfficialProvider(serviceType?: string | null, provider?: strin
 
 export function getTextProviderBaseUrl(config: AIConfig) {
   const provider = config.provider.toLowerCase()
+
+  // 自定义端点：base_url 已包含完整版本路径（如 /api/paas/v4），原样使用
+  if (provider === 'custom') {
+    return (config.baseUrl || '').replace(/\/+$/, '')
+  }
 
   if (provider === 'openai') {
     return joinProviderUrl(config.baseUrl, '/v1', '')
@@ -53,6 +74,10 @@ export function getTextProviderBaseUrl(config: AIConfig) {
 
   if (provider === 'volcengine') {
     return joinProviderUrl(config.baseUrl, '/api/v3', '')
+  }
+
+  if (provider === 'deepseek') {
+    return joinProviderUrl(config.baseUrl, '/v1', '')
   }
 
   return config.baseUrl
@@ -93,6 +118,7 @@ export async function getActiveConfig(serviceType: ServiceType): Promise<AIConfi
     baseUrl: active.baseUrl,
     apiKey: active.apiKey,
     model: models[0] || '',
+    endpoint: active.endpoint || null,
     temperature: parseConfigTemperature(active.settings),
   }
 }
@@ -147,6 +173,7 @@ export async function getConfigById(id: number): Promise<AIConfig | null> {
     baseUrl: row.baseUrl,
     apiKey: row.apiKey,
     model: models[0] || '',
+    endpoint: row.endpoint || null,
     temperature: parseConfigTemperature(row.settings),
   }
 }

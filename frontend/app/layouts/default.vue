@@ -4,13 +4,8 @@
     <header class="header">
       <div class="header-left">
         <button class="brand" @click="navigateTo('/')">
-          <div class="brand-mark">
-            <img v-if="showBrandImage" :src="brandLogo" alt="火宝短剧" class="brand-logo" @error="showBrandImage = false" />
-            <span v-else class="brand-fallback">火</span>
-          </div>
           <div class="brand-text">
-            <span class="brand-name">火宝短剧</span>
-            <span class="brand-sub">Huobao Shorts</span>
+            <span class="brand-name">{{ t('app.title') }}</span>
           </div>
         </button>
       </div>
@@ -29,7 +24,7 @@
       <div class="header-right">
         <a
           class="github-link"
-          href="https://github.com/chatfire-AI/huobao-drama"
+          href="https://github.com/wangzhentao155-debug/huobao-drama"
           target="_blank"
           rel="noopener"
           aria-label="GitHub"
@@ -59,11 +54,9 @@
 import { LayoutGrid, Settings, TriangleAlert, Github } from 'lucide-vue-next'
 import { useI18n } from 'vue-i18n'
 import { aiConfigAPI } from '~/composables/useApi'
-import brandLogo from '~/assets/brand-logo.png'
 
 const { t, locale } = useI18n()
 const route = useRoute()
-const showBrandImage = ref(true)
 
 // 渲染时求值，语言切换即时生效（不能模块级常量固化）
 const SERVICE_TYPE_LABELS = computed(() => ({

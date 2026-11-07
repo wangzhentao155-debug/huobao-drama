@@ -1,4 +1,4 @@
-# 🎬 Huobao Drama — AI 短剧生成平台 / AI Short Drama Generation Platform
+# 🎬 AI 短剧制作平台 — AI Short Drama Studio
 
 <div align="center">
 
@@ -8,32 +8,10 @@
 [![Node Version](https://img.shields.io/badge/Node.js-20+-339933?style=flat&logo=node.js)](https://nodejs.org)
 [![Vue Version](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat&logo=vue.js)](https://vuejs.org)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![Download](https://img.shields.io/github/v/release/chatfire-AI/huobao-drama?style=flat&logo=github&label=Download)](https://github.com/chatfire-AI/huobao-drama/releases/latest)
-
 **中英双语 / Bilingual** | [简体中文](README.zh-CN.md) | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-<p>
-  <a href="https://api.firemux.cn">
-    <img src="docs/images/api-key-cta.svg" width="380" alt="立即获取 FireMux API Key / Get your API key" />
-  </a>
-</p>
-
-**文本 · 图片 · 视频全部 AI 能力，一个 Key 即可开通**<br>
-**Text, image, and video AI capabilities — one key unlocks everything**
-
-部署完成后，在「设置 → 火宝快捷配置」粘贴 Key，一键写入三条推荐配置。<br>
-After deploying, paste the key in "Settings → Huobao Quick Setup" to write three recommended configs in one click.
-
-<p>
-  <a href="https://github.com/chatfire-AI/huobao-drama/releases/latest">
-    <img src="docs/images/desktop-download-cta.svg" width="380" alt="立即下载桌面版 / Download Desktop App (macOS / Windows)" />
-  </a>
-</p>
-<p>
-  <a href="https://www.firemux.cn">
-    <img src="docs/images/website-cta.svg" width="320" alt="访问 FireMux 官网 / Visit the official website" />
-  </a>
-</p>
+**本地部署 · 多模型服务 · 从剧本到成片**<br>
+**Local deployment · multi-provider · script to final cut**
 
 </div>
 
@@ -41,8 +19,8 @@ After deploying, paste the key in "Settings → Huobao Quick Setup" to write thr
 
 ## 📖 项目简介 / Overview
 
-Huobao Drama 是一个基于 AI 的短剧自动化生产平台，实现从剧本生成、角色设计、分镜制作到视频合成的全流程自动化。<br>
-Huobao Drama is an AI-powered short-drama production platform that automates the entire pipeline: script generation, character design, storyboard breakdown, and video compositing.
+AI Short Drama Studio 是一个基于 AI 的短剧自动化生产平台，实现从剧本生成、角色设计、分镜制作到视频合成的全流程自动化。<br>
+AI Short Drama Studio is an AI-powered short-drama production platform that automates the entire pipeline: script generation, character design, storyboard breakdown, and video compositing.
 
 ### 🎯 核心价值 / Core Value
 
@@ -181,7 +159,7 @@ No config files — everything is set via environment variables (all have defaul
 
 ```bash
 # 克隆项目 / Clone the repository
-git clone https://github.com/chatfire-AI/huobao-drama.git
+git clone https://github.com/wangzhentao155-debug/huobao-drama.git
 cd huobao-drama
 
 # 安装后端依赖 / Install backend dependencies
@@ -240,8 +218,8 @@ Visit: `http://localhost:5679`
 
 ### 🗄️ 数据库 / Database
 
-内置 SQLite（`better-sqlite3` + WAL 模式），数据库表在首次启动时自动创建（幂等重放 DDL 与种子数据），默认文件位于 `data/huobao.sqlite3`，可通过 `SQLITE_PATH` 重定向。桌面版数据存放在用户数据目录（`~/Library/Application Support/HuobaoDrama/data/`）。<br>
-Bundled SQLite (`better-sqlite3` + WAL mode). Tables are created automatically on first launch (idempotent DDL replay + seed data). Default file: `data/huobao.sqlite3`, overridable via `SQLITE_PATH`. The desktop app stores data in the user-data directory (`~/Library/Application Support/HuobaoDrama/data/`).
+内置 SQLite（`better-sqlite3` + WAL 模式），数据库表在首次启动时自动创建（幂等重放 DDL 与种子数据），默认文件位于 `data/huobao.sqlite3`，可通过 `SQLITE_PATH` 重定向。桌面版数据存放在用户数据目录（`~/Library/Application Support/AIShortDramaStudio/data/`）。<br>
+Bundled SQLite (`better-sqlite3` + WAL mode). Tables are created automatically on first launch (idempotent DDL replay + seed data). Default file: `data/huobao.sqlite3`, overridable via `SQLITE_PATH`. The desktop app stores data in the user-data directory (`~/Library/Application Support/AIShortDramaStudio/data/`).
 
 从旧版 MySQL 迁移数据：<br>
 Migrating data from a legacy MySQL deployment:
@@ -265,11 +243,8 @@ All AI features (text/image/video) require model services to be configured first
 1. 打开「设置」页<br>
    Open the "Settings" page
 
-2. 在「火宝快捷配置」中粘贴 Huobao API Key（[前往 api.firemux.cn 获取](https://api.firemux.cn)），一键写入文本、图片、视频三条推荐配置<br>
-   Paste your Huobao API key in "Huobao Quick Setup" ([get one at api.firemux.com](https://api.firemux.com)) to write three recommended configs (text, image, video) in one click
-
-3. 或使用「手动模板」按厂商逐个添加，支持连通性测试<br>
-   Or add providers one by one via "Manual Templates", with connectivity testing
+2. 在「手动模板」中按厂商逐个添加文本/图片/视频服务，支持连通性测试<br>
+   Add text/image/video providers one by one via "Manual Templates", with connectivity testing
 
 配置完成横幅自动消失，即可开始创建剧集生产。<br>
 Once configured, the banner disappears and you can start producing episodes.
@@ -298,8 +273,6 @@ On the home page click "New Project", pick a **aspect ratio** (16:9 landscape / 
 
 ### 第 2 步 · 配置 AI 服务（首次） / Step 2 · Configure AI Services (first run)
 
-设置页「火宝快捷配置」粘贴 API Key 一键写入三条推荐配置；或用「手动模板」按厂商自选模型（顶栏可随时切换当前模型，见第 5 步）。<br>
-Paste an API key in Settings → "Huobao Quick Setup" to write the three recommended configs at once, or add providers manually. The current model can be switched any time from the top bar (see Step 5).
 
 <p align="center">
   <img src="docs/screenshots/03-settings-quick.png" alt="AI 服务配置 / AI service setup" width="800">
@@ -367,29 +340,14 @@ The episode list shows the production status of every episode — click "Enter S
 
 ### 🖥️ 桌面应用（推荐） / Desktop App (recommended)
 
-**⬇️ 预编译安装包下载：[国内镜像（腾讯云，推荐）](https://installer.firemux.site/huobao-drama/v4.0.11/) · [GitHub Releases（海外）](https://github.com/chatfire-AI/huobao-drama/releases/latest)**<br>
-**⬇️ Prebuilt installers: [GitHub Releases](https://github.com/chatfire-AI/huobao-drama/releases/latest) · [Mirror for China (Tencent COS)](https://installer.firemux.site/huobao-drama/v4.0.11/)**
 
 |平台<br>Platform|下载文件<br>File to download|
 |---|---|
-|macOS（Apple Silicon，M 系列）<br>macOS (Apple Silicon, M-series)| `HuobaoDrama-4.0.5-arm64.dmg` |
-|macOS（Intel）<br>macOS (Intel)| `HuobaoDrama-4.0.5.dmg` |
-| Windows | `HuobaoDrama.Setup.4.0.5.exe` |
+|macOS（Apple Silicon，M 系列）<br>macOS (Apple Silicon, M-series)| `AIShortDramaStudio-4.1.0-p0-arm64.dmg` |
+|macOS（Intel）<br>macOS (Intel)| `AIShortDramaStudio-4.1.0-p0.dmg` |
+| Windows | `AIShortDramaStudio.Setup.4.1.0-p0.exe` |
 
-> 国内用户请用腾讯云镜像直链下载（GitHub 在国内访问不稳定）。应用内更新器同样国内源优先、GitHub 兜底。<br>
-> China users: use the COS mirror above (GitHub is slow/unreachable in mainland China). The in-app updater also checks the COS mirror first, then falls back to GitHub.
 
-**命令行安装（推荐，免修复）**：用 curl 下载不会触发 macOS 隔离属性，安装后双击即开，不会遇到「已损坏」提示（Apple Silicon 把 `arm64` 文件名换成对应版本，Intel 用无后缀 dmg）：<br>
-**Command-line install (recommended, no Gatekeeper fix needed)**: downloading via curl never sets macOS's quarantine attribute, so the app opens cleanly with no "damaged" prompt (use the `-arm64.dmg` for Apple Silicon, the plain dmg for Intel):
-
-```bash
-curl -L -o /tmp/HuobaoDrama.dmg https://installer.firemux.site/huobao-drama/v4.0.11/HuobaoDrama-4.0.11-arm64.dmg \
-  && hdiutil attach -nobrowse /tmp/HuobaoDrama.dmg \
-  && cp -R /Volumes/HuobaoDrama*/HuobaoDrama.app /Applications/ \
-  && hdiutil detach /Volumes/HuobaoDrama*
-```
-
-无需构建 —— 下载 dmg/exe 直接安装即可，已安装客户端会通过内置更新器自动升级。（如需从源码自行打包，见下方命令。）<br>
 No build required — download the dmg/exe and install. Installed clients auto-update via the built-in updater. (To package from source instead, see the commands below.)
 
 双击安装、开箱即用的桌面版（macOS + Windows）：数据库（SQLite）、生成的媒体文件、Agent 技能全部存放在用户数据目录，卸载应用不影响数据。<br>
@@ -401,9 +359,9 @@ npm run dist        # macOS dmg（arm64 + Intel） / macOS dmg (arm64 + Intel)
 npm run dist:win    # Windows NSIS 安装器（win-x64，可在 macOS 上交叉打包） / Windows NSIS installer (win-x64, cross-buildable on macOS)
 
 # 产物 / Artifacts
-# desktop/release/HuobaoDrama-<版本>-arm64.dmg        (Apple Silicon) / desktop/release/HuobaoDrama-<version>-arm64.dmg     (Apple Silicon)
-# desktop/release/HuobaoDrama-<版本>.dmg              (Intel) / desktop/release/HuobaoDrama-<version>.dmg           (Intel)
-# desktop/release/HuobaoDrama Setup <版本>.exe        (Windows) / desktop/release/HuobaoDrama Setup <version>.exe     (Windows)
+# desktop/release/AIShortDramaStudio-<版本>-arm64.dmg        (Apple Silicon) / desktop/release/AIShortDramaStudio-<version>-arm64.dmg     (Apple Silicon)
+# desktop/release/AIShortDramaStudio-<版本>.dmg              (Intel) / desktop/release/AIShortDramaStudio-<version>.dmg           (Intel)
+# desktop/release/AIShortDramaStudio Setup <版本>.exe        (Windows) / desktop/release/AIShortDramaStudio Setup <version>.exe     (Windows)
 ```
 
 安装说明：<br>
@@ -415,8 +373,8 @@ Installation notes:
   1. **dmg 内自带修复脚本**：把 app 拖入「应用程序」后，双击 dmg 窗口底部的「如提示已损坏请双击我.command」，自动完成修复；<br>
      **The dmg bundles a fix script**: after dragging the app into Applications, double-click the "如提示已损坏请双击我.command" script at the bottom of the dmg window — it removes the quarantine attribute automatically;
 
-  2. 或终端执行 `sudo xattr -cr /Applications/HuobaoDrama.app`。<br>
-     Or run `sudo xattr -cr /Applications/HuobaoDrama.app` in Terminal.
+  2. 或终端执行 `sudo xattr -cr /Applications/AIShortDramaStudio.app`。<br>
+     Or run `sudo xattr -cr /Applications/AIShortDramaStudio.app` in Terminal.
 
   修复只需一次，之后双击图标即可启动，应用内自动更新也不受影响。<br>
   The fix is one-time only — the app then launches normally, and in-app auto-updates are not affected.
@@ -424,8 +382,8 @@ Installation notes:
 - Windows 未签名包 SmartScreen 会提示「更多信息 → 仍要运行」<br>
   The Windows build is unsigned — SmartScreen will prompt "More info → Run anyway"
 
-- 用户数据目录：`~/Library/Application Support/HuobaoDrama/`（数据库、生成的媒体、技能在线编辑的副本）<br>
-  User-data directory: `~/Library/Application Support/HuobaoDrama/` (database, generated media, writable copies of online-edited skills)
+- 用户数据目录：`~/Library/Application Support/AIShortDramaStudio/`（数据库、生成的媒体、技能在线编辑的副本）<br>
+  User-data directory: `~/Library/Application Support/AIShortDramaStudio/` (database, generated media, writable copies of online-edited skills)
 
 - 内置 FFmpeg/FFprobe 二进制，无需系统安装<br>
   FFmpeg/FFprobe binaries are bundled — no system install needed
@@ -433,8 +391,6 @@ Installation notes:
 - Electron 锁定 37.x：better-sqlite3 的 win32 预编译最高覆盖到该版本的 ABI（交叉打包免编译的关键）<br>
   Electron is pinned to 37.x: better-sqlite3's win32 prebuilds max out at that ABI (the key to compilation-free cross-packaging)
 
-- 应用内点击外部链接（如「前往 api.firemux.cn 获取 Key」）直接用系统浏览器打开<br>
-  External links open in the system browser (e.g. "Get a key at api.firemux.com")
 
 #### 🔄 应用内更新（无需 Apple 签名） / In-App Updates (no Apple signing required)
 
@@ -625,8 +581,8 @@ HUOBAO_VERSION=4.0.5 docker compose up -d --build
 
 ### Q: 桌面版数据存在哪里？ / Q: Where does the desktop app store data?
 
-A: `~/Library/Application Support/HuobaoDrama/data/`（SQLite 数据库 + 生成的图片/视频），技能在线编辑的副本在同级 `workspace/` 目录。开发模式下则使用仓库 `data/` 目录。<br>
-A: `~/Library/Application Support/HuobaoDrama/data/` (SQLite database + generated images/videos); writable copies of online-edited skills live in the sibling `workspace/` directory. In development mode the repo's `data/` directory is used instead.
+A: `~/Library/Application Support/AIShortDramaStudio/data/`（SQLite 数据库 + 生成的图片/视频），技能在线编辑的副本在同级 `workspace/` 目录。开发模式下则使用仓库 `data/` 目录。<br>
+A: `~/Library/Application Support/AIShortDramaStudio/data/` (SQLite database + generated images/videos); writable copies of online-edited skills live in the sibling `workspace/` directory. In development mode the repo's `data/` directory is used instead.
 
 ### Q: 旧版 MySQL 数据怎么迁移到 SQLite？ / Q: How do I migrate legacy MySQL data to SQLite?
 
@@ -640,8 +596,6 @@ A: No install needed. The project bundles `ffmpeg-static` / `ffprobe-static` bin
 
 ### Q: 页面顶部提示「尚未配置模型」？ / Q: The top of the page says "No model configured"?
 
-A: 这是正常的首次部署引导。前往「设置」页，用「火宝快捷配置」粘贴 API Key 一键写入，或通过「手动模板」按厂商添加。文本、图片、视频三类均有启用中的配置后横幅自动消失。<br>
-A: That's the normal first-deploy guidance. Go to "Settings" and use "Huobao Quick Setup" to paste an API key and write configs in one click, or add providers via "Manual Templates". The banner disappears once text, image, and video all have an enabled config.
 
 ### Q: 前端无法连接后端 API？ / Q: The frontend can't reach the backend API?
 
@@ -739,8 +693,6 @@ A: The backend creates all tables automatically on first launch — check the lo
   - 未配置 AI 服务时全站顶部横幅提示并引导至设置页<br>
     Site-wide banner guiding to Settings when no AI service is configured
 
-  - 设置页新增「火宝快捷配置」：一个 Key 写入文本/图片/视频三条推荐配置<br>
-    New "Huobao Quick Setup" in Settings: one key writes three recommended configs (text/image/video)
 
   - 未配置模型的报错中文化并指引设置页<br>
     Unconfigured-model errors localized with pointers to Settings

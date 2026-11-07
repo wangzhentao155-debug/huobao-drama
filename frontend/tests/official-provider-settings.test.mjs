@@ -8,10 +8,10 @@ const useApi = readFileSync(new URL('../app/composables/useApi.ts', import.meta.
 function providerPresetBlock(serviceType) {
   const presetsStart = settingsPage.indexOf('const providerPresets = {')
   assert.notEqual(presetsStart, -1, 'missing providerPresets')
-  const marker = `  ${serviceType}: {`
+  const marker = `  ${serviceType}: [`
   const start = settingsPage.indexOf(marker, presetsStart)
   assert.notEqual(start, -1, `missing ${serviceType} provider presets`)
-  const end = settingsPage.indexOf('\n  },', start)
+  const end = settingsPage.indexOf('\n  ],', start)
   assert.notEqual(end, -1, `unterminated ${serviceType} provider presets`)
   return settingsPage.slice(start, end)
 }
@@ -28,27 +28,25 @@ test('settings page exposes official provider templates only', () => {
   assert.doesNotMatch(useApi, /huobaoPreset/i)
   assert.doesNotMatch(useApi, /\/huobao-preset/)
 
-  assert.match(settingsPage, /const providers = \['gemini', 'openai', 'volcengine', 'minimax', 'aliyun'\]/)
+  assert.match(settingsPage, /const providers = \['gemini', 'openai', 'deepseek', 'volcengine', 'minimax', 'aliyun', 'custom'\]/)
   assert.match(settingsPage, /https:\/\/generativelanguage\.googleapis\.com/)
   assert.match(settingsPage, /https:\/\/api\.openai\.com/)
   assert.match(settingsPage, /https:\/\/ark\.cn-beijing\.volces\.com/)
   assert.match(settingsPage, /https:\/\/\{WorkspaceId\}\.cn-beijing\.maas\.aliyuncs\.com/)
-  assert.doesNotMatch(settingsPage, /https:\/\/api\.deepseek\.com/)
-  assert.doesNotMatch(settingsPage, /https:\/\/dashscope\.aliyuncs\.com/)
+  assert.match(settingsPage, /https:\/\/api\.deepseek\.com/)
+  assert.match(settingsPage, /https:\/\/dashscope\.aliyuncs\.com/)
   assert.doesNotMatch(settingsPage, /https:\/\/api\.vidu\.com/)
   assert.doesNotMatch(settingsPage, /\['ali'|'ali',|, 'ali'\]/)
-  assert.match(settingsPage, /火宝快捷配置/)
-  assert.match(settingsPage, /https:\/\/api\.firemux\.com/)
-  assert.match(settingsPage, /applyHuobaoQuickConfig/)
+  assert.doesNotMatch(settingsPage, /快捷配置|api\.firemux|applyHuobaoQuickConfig|huobaoQuickConfigs/)
   assert.doesNotMatch(settingsPage, /https:\/\/api\.minimax\.io/)
 })
 
 test('settings page offers official default model IDs', () => {
   assert.match(settingsPage, /gemini-3\.1-pro-preview/)
-  assert.match(settingsPage, /gemini-3\.5-flash/)
+  assert.match(settingsPage, /gemini-3\.8-flash/)
   assert.match(settingsPage, /gemini-3-flash-preview/)
   assert.match(settingsPage, /gpt-5\.6-terra/)
-  assert.match(settingsPage, /deepseek-v4-flash/)
+  assert.match(settingsPage, /deepseek-flash/)
   assert.match(settingsPage, /gemini-3-pro-image/)
   assert.match(settingsPage, /gemini-3\.1-flash-image/)
   assert.match(settingsPage, /gpt-image-2/)
@@ -86,13 +84,4 @@ test('settings page offers the supported official provider presets', () => {
   assert.match(providerPresetBlock('video'), /aliyun/)
   assert.doesNotMatch(providerPresetBlock('video'), /'vidu'/i)
   assert.doesNotMatch(settingsPage, /audio:\s*\{/)
-})
-
-test('Huobao quick config includes Wan 3.0 through the Qwen gateway route', () => {
-  const quickStart = settingsPage.indexOf('const huobaoQuickConfigs = [')
-  assert.notEqual(quickStart, -1)
-  const quickConfigs = settingsPage.slice(quickStart, settingsPage.indexOf('\n]', quickStart) + 2)
-  assert.match(quickConfigs, /provider:\s*'aliyun'/)
-  assert.match(quickConfigs, /base_url:\s*'https:\/\/api\.firemux\.com\/qwen'/)
-  assert.match(quickConfigs, /model:\s*\['wan3\.0-video-prime', 'wan3\.0-video'\]/)
 })

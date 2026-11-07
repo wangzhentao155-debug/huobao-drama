@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-火宝短剧（Huobao Drama）— AI 短剧/漫剧一站式制作工具。全 TypeScript 栈：小说 → 剧本改写 → 资产提取 → 生图 → 分镜拆解 → 生视频 → FFmpeg 拼接导出。支持 Electron 桌面版（macOS dmg）与服务器部署。
+AI 短剧制作平台（Huobao Drama 二次开发）— AI 短剧/漫剧一站式制作工具。全 TypeScript 栈：小说 → 剧本改写 → 资产提取 → 生图 → 分镜拆解 → 生视频 → FFmpeg 拼接导出。支持 Electron 桌面版（macOS dmg）与服务器部署。
 
 ## Structure
 
@@ -53,7 +53,7 @@ configs/   — 遗留死配置，代码零引用
 
 ### Desktop
 - 主进程 `desktop/src/main.ts`：单实例锁 → 空闲端口 → userData 准备（workspace 模板 copy-once + `.template-version` 版本标记）→ `utilityProcess.fork` 后端 → 轮询 health → BrowserWindow
-- userData：打包版 `~/Library/Application Support/HuobaoDrama/`，dev 版 `HuobaoDrama-Dev/`（互不干扰）
+- userData：新安装使用 `~/Library/Application Support/AIShortDramaStudio/`；已有旧版安装继续使用 `HuobaoDrama/`，避免数据搬迁；dev 版使用 `AIShortDramaStudio-Dev/`
 - 后端 bundle 在 asar 内（externals 经 asar node_modules 解析，.node 自动重定向 unpacked）
 
 ## Database

@@ -21,9 +21,9 @@ function makeResources(root: string): string {
 }
 
 test('ASCII detection only accepts paths safe for native runtime loading', () => {
-  assert.equal(isAsciiPath('C:\\Program Files\\HuobaoDrama'), true)
-  assert.equal(isAsciiPath('C:\\用户\\HuobaoDrama'), false)
-  assert.equal(isAsciiPath('D:\\应用\\HuobaoDrama'), false)
+  assert.equal(isAsciiPath('C:\\Program Files\\AIShortDramaStudio'), true)
+  assert.equal(isAsciiPath('C:\\用户\\AIShortDramaStudio'), false)
+  assert.equal(isAsciiPath('D:\\应用\\AIShortDramaStudio'), false)
 })
 
 test('runtime staging copies every backend dependency, reuses cache and refreshes on package change', () => {
@@ -61,11 +61,11 @@ test('a Chinese user profile falls back to an ASCII ProgramData runtime cache', 
     const programData = path.join(root, 'ProgramData')
     const staged = stageRuntimeResources(resources, {
       version: '1.0.0',
-      userDataDir: path.join(root, '中文用户', 'HuobaoDrama'),
+      userDataDir: path.join(root, '中文用户', 'AIShortDramaStudio'),
       programDataDir: programData,
     })
     assert.equal(isAsciiPath(staged), true)
-    assert.ok(staged.startsWith(path.join(programData, 'HuobaoDrama')))
+    assert.ok(staged.startsWith(path.join(programData, 'AIShortDramaStudio')))
   } finally {
     fs.rmSync(root, { recursive: true, force: true })
   }

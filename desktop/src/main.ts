@@ -44,16 +44,20 @@ let fatalReported = false
 let backendStartupTail = ''
 
 // userData 显式按模式区分：打包版 / dev 版互不干扰（数据库、上传文件、单实例锁均隔离），
-// 不依赖 package.json 命名（打包后与 dev 同名会导致单实例锁误杀）
-const userDataDir = path.join(
-  app.getPath('appData'),
-  app.isPackaged ? 'HuobaoDrama' : 'HuobaoDrama-Dev',
-)
+// 不依赖 package.json 命名（打包后与 dev 同名会导致单实例锁误杀）。
+// 品牌改名后：已有旧目录继续使用，避免大体积数据搬迁；新安装使用新目录。
+const APP_DIR_NAME = app.isPackaged ? 'AIShortDramaStudio' : 'AIShortDramaStudio-Dev'
+const LEGACY_DIR_NAME = app.isPackaged ? 'HuobaoDrama' : 'HuobaoDrama-Dev'
+const preferredUserDataDir = path.join(app.getPath('appData'), APP_DIR_NAME)
+const legacyUserDataDir = path.join(app.getPath('appData'), LEGACY_DIR_NAME)
+const userDataDir = !fs.existsSync(preferredUserDataDir) && fs.existsSync(legacyUserDataDir)
+  ? legacyUserDataDir
+  : preferredUserDataDir
 try {
   fs.mkdirSync(userDataDir, { recursive: true })
   app.setPath('userData', userDataDir)
 } catch (error) {
-  dialog.showErrorBox('火宝短剧启动失败', `无法准备用户目录：${userDataDir}\n${(error as Error).message}`)
+  dialog.showErrorBox('AI 短剧制作平台启动失败', `无法准备用户目录：${userDataDir}\n${(error as Error).message}`)
   app.exit(1)
 }
 
@@ -66,7 +70,7 @@ function failStartup(error: unknown) {
   const message = redactStartupLog(error instanceof Error ? error.message : error)
   startupLog.write(`fatal: ${error instanceof Error ? error.stack : error}`)
   showMainWindow()
-  dialog.showErrorBox('火宝短剧启动失败', `${message}\n\n启动日志：${startupLog.file}\n请将此日志发给技术支持，无需删除项目数据。`)
+  dialog.showErrorBox('AI 短剧制作平台启动失败', `${message}\n\n启动日志：${startupLog.file}\n请将此日志发给技术支持，无需删除项目数据。`)
   app.quit()
 }
 process.on('uncaughtException', failStartup)
@@ -253,7 +257,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 900,
-    title: '火宝短剧',
+    title: 'AI 短剧制作平台',
     show: true,
     backgroundColor: '#f6f7fb',
     webPreferences: {
@@ -266,7 +270,7 @@ function createWindow() {
   // 页面标题自带产品名，避免文件路径兜底标题
   mainWindow.on('page-title-updated', e => e.preventDefault())
   mainWindow.on('closed', () => { mainWindow = null })
-  // 外链一律交给系统浏览器：应用内不弹新窗（如设置页「前往 api.firemux.cn 获取 Key」）
+  // 外链一律交给系统浏览器：应用内不弹新窗
   const isAppUrl = (url: string) => {
     try { return new URL(url).origin === `http://127.0.0.1:${backendPort}` } catch { return false }
   }

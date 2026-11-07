@@ -79,6 +79,8 @@ export interface AIConfig {
   baseUrl: string
   apiKey: string
   model: string
+  /** custom provider 的协议适配器标识 */
+  endpoint?: string | null
 }
 
 export interface ImageGenerationRecord {

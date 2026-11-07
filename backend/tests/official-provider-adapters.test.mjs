@@ -56,10 +56,9 @@ test('backend rejects unsupported providers at DB and route boundaries', () => {
   const route = read('src/routes/aiConfigs.ts')
 
   assert.match(ai, /officialProviders/)
-  assert.match(ai, /text:\s*\[\s*'openai',\s*'gemini',\s*'volcengine'\s*\]/)
-  assert.match(ai, /image:\s*\[\s*'openai',\s*'gemini',\s*'volcengine'\s*\]/)
-  assert.match(ai, /video:\s*\[\s*'volcengine',\s*'minimax',\s*'aliyun'\s*\]/)
-  assert.doesNotMatch(ai, /'deepseek'/)
+  assert.match(ai, /text:\s*\[[^\]]*'openai'[^\]]*'gemini'[^\]]*'volcengine'[^\]]*'deepseek'[^\]]*'custom'[^\]]*\]/s)
+  assert.match(ai, /image:\s*\[[^\]]*'openai'[^\]]*'gemini'[^\]]*'volcengine'[^\]]*'custom'[^\]]*\]/s)
+  assert.match(ai, /video:\s*\[[^\]]*'volcengine'[^\]]*'minimax'[^\]]*'aliyun'[^\]]*'custom'[^\]]*\]/s)
   assert.doesNotMatch(ai, /'ali'/)
   assert.doesNotMatch(ai, /'vidu'/)
   assert.doesNotMatch(ai, /audio:\s*\[/)
@@ -71,6 +70,18 @@ test('backend rejects unsupported providers at DB and route boundaries', () => {
   assert.match(route, /isOfficialProvider\(body\.service_type,\s*body\.provider\)/)
   assert.match(route, /isOfficialProvider\(serviceType,\s*provider\)/)
   assert.match(route, /不支持的 service_type\/provider/)
+})
+
+test('custom image/video adapters resolve by endpoint protocol', () => {
+  const registry = read('src/services/adapters/registry.ts')
+  const ai = read('src/services/ai.ts')
+
+  assert.match(ai, /customProtocols/)
+  assert.match(ai, /image:\s*\[\s*'openai',\s*'gemini',\s*'volcengine'\s*\]/)
+  assert.match(ai, /video:\s*\[\s*'aliyun',\s*'volcengine',\s*'minimax'\s*\]/)
+  assert.match(registry, /provider\.toLowerCase\(\) === 'custom'/)
+  assert.match(registry, /imageAdapters\[key\]/)
+  assert.match(registry, /videoAdapters\[key\]/)
 })
 
 test('AI config routes reject unsupported service/provider pairs in create, test, and update paths', () => {
@@ -122,8 +133,8 @@ test('AI config probe uses provider-specific auth schemes', () => {
   assert.match(route, /X-DashScope-Async': 'enable'/)
   assert.match(route, /\/services\/aigc\/video-generation\/video-synthesis/)
   assert.match(route, /'\/chat\/completions'/)
+  assert.match(route, /p === 'custom'/)
   assert.doesNotMatch(route, /viduHeaders/)
-  assert.doesNotMatch(route, /p === 'deepseek'/)
   assert.doesNotMatch(route, /p === 'ali'/)
   assert.doesNotMatch(route, /p === 'vidu'/)
 })

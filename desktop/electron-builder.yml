@@ -1,5 +1,5 @@
-appId: com.huobao.drama
-productName: HuobaoDrama
+appId: com.aishortdrama.studio
+productName: AIShortDramaStudio
 directories:
   output: release
   buildResources: build
@@ -56,4 +56,4 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: always
-  shortcutName: HuobaoDrama
+  shortcutName: AIShortDramaStudio

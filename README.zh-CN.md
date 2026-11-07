@@ -1,4 +1,4 @@
-# 🎬 Huobao Drama - AI 短剧生成平台
+# 🎬 AI 短剧制作平台 — AI Short Drama Studio
 
 <div align="center">
 
@@ -7,20 +7,10 @@
 [![Node Version](https://img.shields.io/badge/Node.js-20+-339933?style=flat&logo=node.js)](https://nodejs.org)
 [![Vue Version](https://img.shields.io/badge/Vue-3.x-4FC08D?style=flat&logo=vue.js)](https://vuejs.org)
 [![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![下载](https://img.shields.io/github/v/release/chatfire-AI/huobao-drama?style=flat&logo=github&label=%E4%B8%8B%E8%BD%BD)](https://github.com/chatfire-AI/huobao-drama/releases/latest)
 
 [中英双语](README.md) | **简体中文** | [English](README.en.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
 [功能特性](#-功能特性) • [快速开始](#-快速开始) • [图文教程](#-图文教程) • [桌面版](#-桌面应用推荐) • [部署指南](#-部署指南)
-
-<h2>🔑 <a href="https://api.firemux.cn">获取 Huobao API Key 👉 立即查看</a></h2>
-
-**文本 · 图片 · 视频全部 AI 能力，一个 Key 即可开通**
-
-部署完成后在「设置 → 火宝快捷配置」粘贴 Key，一键写入三条推荐配置，开箱即用
-
-<h3>📥 <a href="https://github.com/chatfire-AI/huobao-drama/releases/latest">下载桌面版（macOS / Windows）</a></h3>
-<h3>🌐 <a href="https://www.firemux.cn">官方网站</a></h3>
 
 </div>
 
@@ -28,7 +18,7 @@
 
 ## 📖 项目简介
 
-Huobao Drama 是一个基于 AI 的短剧自动化生产平台，实现从剧本生成、角色设计、分镜制作到视频合成的全流程自动化。
+AI Short Drama Studio 是一个基于 AI 的短剧自动化生产平台，实现从剧本生成、角色设计、分镜制作到视频合成的全流程自动化。
 
 ### 🎯 核心价值
 
@@ -133,7 +123,7 @@ data/       — 生成资源文件与 SQLite 数据库
 
 ```bash
 # 克隆项目
-git clone https://github.com/chatfire-AI/huobao-drama.git
+git clone https://github.com/wangzhentao155-debug/huobao-drama.git
 cd huobao-drama
 
 # 安装后端依赖
@@ -182,7 +172,7 @@ cd ../backend && npm start
 
 ### 🗄️ 数据库
 
-内置 SQLite（`better-sqlite3` + WAL 模式），数据库表在首次启动时自动创建（幂等重放 DDL 与种子数据），默认文件位于 `data/huobao.sqlite3`，可通过 `SQLITE_PATH` 重定向。桌面版数据存放在用户数据目录（`~/Library/Application Support/HuobaoDrama/data/`）。
+内置 SQLite（`better-sqlite3` + WAL 模式），数据库表在首次启动时自动创建（幂等重放 DDL 与种子数据），默认文件位于 `data/huobao.sqlite3`，可通过 `SQLITE_PATH` 重定向。桌面版数据存放在用户数据目录（`~/Library/Application Support/AIShortDramaStudio/data/`）。
 
 从旧版 MySQL 迁移数据：
 
@@ -200,8 +190,7 @@ cd backend && npx tsx scripts/import-mysql-to-sqlite.ts
 启动后所有 AI 功能（文本/生图/视频）都需要先配置模型服务，未配置时页面顶部会有横幅引导：
 
 1. 打开「设置」页
-2. 在「火宝快捷配置」中粘贴 Huobao API Key（[前往 api.firemux.cn 获取](https://api.firemux.cn)），一键写入文本、图片、视频三条推荐配置
-3. 或使用「手动模板」按厂商逐个添加，支持连通性测试
+2. 在「手动模板」中按厂商逐个添加文本/图片/视频服务，支持连通性测试
 
 配置完成横幅自动消失，即可开始创建剧集生产。
 
@@ -226,8 +215,6 @@ cd backend && npx tsx scripts/import-mysql-to-sqlite.ts
 </p>
 
 ### 第 2 步 · 配置 AI 服务（首次）
-
-设置页「火宝快捷配置」粘贴 API Key 一键写入三条推荐配置；或用「手动模板」按厂商自选模型（顶栏可随时切换当前模型，见第 5 步）。
 
 <p align="center">
   <img src="docs/screenshots/03-settings-quick.png" alt="AI 服务配置" width="800">
@@ -285,26 +272,11 @@ cd backend && npx tsx scripts/import-mysql-to-sqlite.ts
 
 ### 🖥️ 桌面应用（推荐）
 
-**⬇️ 预编译安装包下载：[国内镜像（腾讯云，推荐）](https://installer.firemux.site/huobao-drama/v4.0.11/) · [GitHub Releases（海外）](https://github.com/chatfire-AI/huobao-drama/releases/latest)**
-
 | 平台 | 下载文件 |
 |---|---|
-| macOS（Apple Silicon，M 系列） | `HuobaoDrama-4.0.5-arm64.dmg` |
-| macOS（Intel） | `HuobaoDrama-4.0.5.dmg` |
-| Windows | `HuobaoDrama.Setup.4.0.5.exe` |
-
-> 国内用户请用腾讯云镜像直链下载（GitHub 在国内访问不稳定）。应用内更新器同样国内源优先、GitHub 兜底。
-
-**命令行安装（推荐，免修复）**：用 curl 下载不会触发 macOS 隔离属性，安装后双击即开，不会遇到「已损坏」提示（Apple Silicon 把 `arm64` 文件名换成对应版本，Intel 用无后缀 dmg）：
-
-```bash
-curl -L -o /tmp/HuobaoDrama.dmg https://installer.firemux.site/huobao-drama/v4.0.11/HuobaoDrama-4.0.11-arm64.dmg \
-  && hdiutil attach -nobrowse /tmp/HuobaoDrama.dmg \
-  && cp -R /Volumes/HuobaoDrama*/HuobaoDrama.app /Applications/ \
-  && hdiutil detach /Volumes/HuobaoDrama*
-```
-
-无需构建 —— 下载 dmg/exe 直接安装即可，已安装客户端会通过内置更新器自动升级。（如需从源码自行打包，见下方命令。）
+| macOS（Apple Silicon，M 系列） | `AIShortDramaStudio-4.1.0-p0-arm64.dmg` |
+| macOS（Intel） | `AIShortDramaStudio-4.1.0-p0.dmg` |
+| Windows | `AIShortDramaStudio.Setup.4.1.0-p0.exe` |
 
 双击安装、开箱即用的桌面版（macOS + Windows）：数据库（SQLite）、生成的媒体文件、Agent 技能全部存放在用户数据目录，卸载应用不影响数据。
 
@@ -314,23 +286,22 @@ npm run dist        # macOS dmg（arm64 + Intel）
 npm run dist:win    # Windows NSIS 安装器（win-x64，可在 macOS 上交叉打包）
 
 # 产物
-# desktop/release/HuobaoDrama-<版本>-arm64.dmg        (Apple Silicon)
-# desktop/release/HuobaoDrama-<版本>.dmg              (Intel)
-# desktop/release/HuobaoDrama Setup <版本>.exe        (Windows)
+# desktop/release/AIShortDramaStudio-<版本>-arm64.dmg        (Apple Silicon)
+# desktop/release/AIShortDramaStudio-<版本>.dmg              (Intel)
+# desktop/release/AIShortDramaStudio Setup <版本>.exe        (Windows)
 ```
 
 安装说明：
 
 - macOS 未签名包首次打开可能提示「App 已损坏，无法打开」（Apple Silicon 常见），这是 Gatekeeper 隔离属性导致，并非文件损坏。两种修复方式任选：
   1. **dmg 内自带修复脚本**：把 app 拖入「应用程序」后，双击 dmg 窗口底部的「如提示已损坏请双击我.command」，自动完成修复；
-  2. 或终端执行 `sudo xattr -cr /Applications/HuobaoDrama.app`。
+  2. 或终端执行 `sudo xattr -cr /Applications/AIShortDramaStudio.app`。
 
   修复只需一次，之后双击图标即可启动，应用内自动更新也不受影响。
 - Windows 未签名包 SmartScreen 会提示「更多信息 → 仍要运行」
-- 用户数据目录：`~/Library/Application Support/HuobaoDrama/`（数据库、生成的媒体、技能在线编辑的副本）
+- 用户数据目录：`~/Library/Application Support/AIShortDramaStudio/`（数据库、生成的媒体、技能在线编辑的副本）
 - 内置 FFmpeg/FFprobe 二进制，无需系统安装
 - Electron 锁定 37.x：better-sqlite3 的 win32 预编译最高覆盖到该版本的 ABI（交叉打包免编译的关键）
-- 应用内点击外部链接（如「前往 api.firemux.cn 获取 Key」）直接用系统浏览器打开
 
 #### 🔄 应用内更新（无需 Apple 签名）
 
@@ -478,7 +449,7 @@ HUOBAO_VERSION=4.0.5 docker compose up -d --build
 
 ### Q: 桌面版数据存在哪里？
 
-A: `~/Library/Application Support/HuobaoDrama/data/`（SQLite 数据库 + 生成的图片/视频），技能在线编辑的副本在同级 `workspace/` 目录。开发模式下则使用仓库 `data/` 目录。
+A: `~/Library/Application Support/AIShortDramaStudio/data/`（SQLite 数据库 + 生成的图片/视频），技能在线编辑的副本在同级 `workspace/` 目录。开发模式下则使用仓库 `data/` 目录。
 
 ### Q: 旧版 MySQL 数据怎么迁移到 SQLite？
 
@@ -489,8 +460,6 @@ A: 保持 MySQL 可连接（环境变量或 `backend/.env`），执行 `cd backe
 A: 无需安装。项目内置 `ffmpeg-static` / `ffprobe-static` 二进制（桌面版随包携带）。系统 `PATH` 中的 FFmpeg 也不会冲突，也可通过 `FFMPEG_BIN`/`FFPROBE_BIN` 显式指定。
 
 ### Q: 页面顶部提示「尚未配置模型」？
-
-A: 这是正常的首次部署引导。前往「设置」页，用「火宝快捷配置」粘贴 API Key 一键写入，或通过「手动模板」按厂商添加。文本、图片、视频三类均有启用中的配置后横幅自动消失。
 
 ### Q: 前端无法连接后端 API？
 
@@ -540,7 +509,6 @@ A: 后端会在首次启动时自动创建所有表，检查日志确认初始�
   - 新增 `docker/init.sql` 及导出脚本（DBA 审核 / 预建表）
 - 首次使用引导
   - 未配置 AI 服务时全站顶部横幅提示并引导至设置页
-  - 设置页新增「火宝快捷配置」：一个 Key 写入文本/图片/视频三条推荐配置
   - 未配置模型的报错中文化并指引设置页
 - 视频模型默认调整为 Seedance 2.0 Fast
 - 厂商收敛：仅保留 OpenAI / Gemini / 火山引擎

@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "Huobao Shorts",
+    "title": "AI Short Drama Studio",
     "updateAvailable": "New version v{version} is available. Upgrade in Settings → About."
   },
   "characterVoice": {
@@ -160,7 +160,9 @@
       "aspectRatio": "Aspect ratio",
       "aspectRatioPlaceholder": "Select aspect ratio",
       "aspectRatioHint": "Fixed after creation; all videos will use this ratio",
-      "submit": "Create project"
+      "submit": "Create project",
+      "template": "Production mode",
+      "templatePlaceholder": "Select production mode"
     },
     "deleteDialog": {
       "title": "Delete project",
@@ -255,7 +257,8 @@
       "styles": "Style Presets",
       "storage": "Storage",
       "about": "About & Updates",
-      "agents": "Agent Config"
+      "agents": "Agent Config",
+      "templates": "System Config"
     },
     "common": {
       "disabled": "Disabled",
@@ -288,13 +291,6 @@
     "ai": {
       "title": "AI Service Configs",
       "desc": "Start with a recommended template, then fine-tune per service type. The workbench locks the chosen image and video capabilities when creating an episode.",
-      "quickTitle": "Huobao Quick Config",
-      "recommended": "Recommended",
-      "quickDesc": "Enter a Huobao API Key to write three recommended configs (text, image, video) at once.",
-      "getKey": "Get a Huobao API key",
-      "regionCn": "China",
-      "regionCom": "Global",
-      "applyQuick": "Apply Huobao Config",
       "manualTitle": "Manual Templates",
       "manualDesc": "Pick a service type, then fill the recommended `provider / base URL / model` from a template.",
       "activeCount": "{n} active",
@@ -304,8 +300,6 @@
       "setDefault": "Set as default model for this type",
       "noBaseUrl": "Base URL not set",
       "test": "Test",
-      "apiKeyRequired": "Please enter a Huobao API Key",
-      "quickApplied": "Huobao quick config written",
       "defaultModelSwitched": "Default {type} model switched to {model}",
       "meta": {
         "text": "Text capabilities: script rewriting, asset extraction, storyboard breaking",
@@ -409,7 +403,7 @@
       "addTitle": "Add {type} Service",
       "sub": "Pick a template first — a sensible `Base URL` and default models will be filled in automatically.",
       "name": "Config name",
-      "namePlaceholder": "e.g. Huobao default image service",
+      "namePlaceholder": "e.g. default image service",
       "provider": "Provider",
       "providerPlaceholder": "Select a provider",
       "priority": "Priority",
@@ -897,6 +891,11 @@
       "transferring": "Video generated; transferring",
       "awaitingDelivery": "Video generated; awaiting delivery",
       "restoreHint": "Recover the existing task instead of generating again"
+    },
+    "workflow": {
+      "title": "Workflow",
+      "default": "Default flow",
+      "confirm": "confirm"
     }
   },
   "errors": {
@@ -917,7 +916,7 @@
     "helpTitle": "Guide",
     "index": {
       "welcome": {
-        "title": "👋 Welcome to Huobao Drama",
+        "title": "👋 Welcome to AIGC Production Workbench",
         "desc": "Novel → script → assets → storyboard → video → final cut, all in one place. Configure AI services first, then create your first project."
       },
       "create": {
@@ -926,14 +925,10 @@
       },
       "settings": {
         "title": "Step 1 · Configure AI services",
-        "desc": "Every AI feature needs this first. Open Settings and paste a Huobao API Key to set up text/image/video in one click."
+        "desc": "Every AI feature needs this first. Open Settings and paste an API key to set up text/image/video in one click."
       }
     },
     "settings": {
-      "quick": {
-        "title": "Fastest setup: Quick Setup",
-        "desc": "Paste a Huobao API Key to write the three recommended configs (text/image/video) at once, with connectivity testing."
-      },
       "nav": {
         "title": "Everything lives here",
         "desc": "Switch sections on the left: AI services, general (UI & content language), style presets, agent prompts & skills, storage, about."

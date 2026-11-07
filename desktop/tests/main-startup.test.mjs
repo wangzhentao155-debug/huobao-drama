@@ -81,7 +81,7 @@ test('page load failure reports a visible error instead of leaving a hidden wind
 test('non-ASCII Windows install resources use one short path for backend and media tools', async () => {
   const shortPath = 'C:\\HUOBAO~1\\resources'
   const p = await boot('healthy', {
-    resourcesPath: 'C:\\用户\\HuobaoDrama\\resources',
+    resourcesPath: 'C:\\用户\\AIShortDramaStudio\\resources',
     shortPath,
   })
   assert.ok(p.forkArgs()[0].startsWith(shortPath))

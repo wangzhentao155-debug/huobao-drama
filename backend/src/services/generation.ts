@@ -234,7 +234,7 @@ async function processTask(id: number, config: AIConfig) {
     let url: string, method: string, headers: Record<string, string>, body: unknown
 
     if (type === 'image') {
-      const adapter = getImageAdapter(config.provider)
+      const adapter = getImageAdapter(config.provider, config.endpoint)
       const resolvedReferenceImages = await normalizeReferenceImages(params.referenceImages)
       ;({ url, method, headers, body } = adapter.buildGenerateRequest(config, {
         id: record.id,
@@ -245,7 +245,7 @@ async function processTask(id: number, config: AIConfig) {
         referenceImages: resolvedReferenceImages.length ? JSON.stringify(resolvedReferenceImages) : null,
       }))
     } else {
-      const adapter = getVideoAdapter(config.provider)
+      const adapter = getVideoAdapter(config.provider, config.endpoint)
       const resolvedImageUrl = await normalizeVideoReferenceUrl(params.imageUrl)
       const resolvedFirstFrameUrl = await normalizeVideoReferenceUrl(params.firstFrameUrl)
       const resolvedLastFrameUrl = await normalizeVideoReferenceUrl(params.lastFrameUrl)
@@ -311,7 +311,7 @@ async function processTask(id: number, config: AIConfig) {
     logTaskPayload(label, 'response payload', { id, provider: config.provider, result })
 
     if (type === 'image') {
-      const adapter = getImageAdapter(config.provider)
+      const adapter = getImageAdapter(config.provider, config.endpoint)
       const { isAsync, taskId, imageUrl } = adapter.parseGenerateResponse(result)
 
       if (!isAsync && imageUrl) {
@@ -336,7 +336,7 @@ async function processTask(id: number, config: AIConfig) {
       return
     }
 
-    const adapter = getVideoAdapter(config.provider)
+    const adapter = getVideoAdapter(config.provider, config.endpoint)
     const { isAsync, taskId, videoUrl, duration } = adapter.parseGenerateResponse(result)
     if (taskId) {
       await markPolling(id, taskId)
@@ -380,7 +380,7 @@ async function pollTask(record: SysTaskRecord, config: AIConfig, taskId: string)
   const type = record.type as TaskType
   const label = taskLabel(type)
   const profile = POLL_PROFILES[type]
-  const adapter = type === 'image' ? getImageAdapter(config.provider) : getVideoAdapter(config.provider)
+  const adapter = type === 'image' ? getImageAdapter(config.provider, config.endpoint) : getVideoAdapter(config.provider, config.endpoint)
   const startedAt = Date.now()
 
   for (let i = 0; i < profile.attempts; i++) {

@@ -26,22 +26,36 @@ export const videoAdapters: Record<string, VideoProviderAdapter> = {
 
 /**
  * 获取图片 Adapter
- * @param provider 厂商名称
+ * @param provider 厂商名称；custom 时按 protocol 选择协议适配器
  * @returns 对应的 Adapter
  */
-export function getImageAdapter(provider: string): ImageProviderAdapter {
-  const adapter = imageAdapters[provider.toLowerCase()]
-  if (!adapter) throw new Error(`Unsupported image provider: ${provider}`)
+export function getImageAdapter(provider: string, protocol?: string | null): ImageProviderAdapter {
+  const key = provider.toLowerCase() === 'custom'
+    ? (protocol || '').toLowerCase()
+    : provider.toLowerCase()
+  const adapter = imageAdapters[key]
+  if (!adapter) {
+    throw new Error(provider.toLowerCase() === 'custom'
+      ? `自定义图片协议未选择或不受支持：${protocol || '(空)'}`
+      : `Unsupported image provider: ${provider}`)
+  }
   return adapter
 }
 
 /**
  * 获取视频 Adapter
- * @param provider 厂商名称
+ * @param provider 厂商名称；custom 时按 protocol 选择协议适配器
  * @returns 对应的 Adapter
  */
-export function getVideoAdapter(provider: string): VideoProviderAdapter {
-  const adapter = videoAdapters[provider.toLowerCase()]
-  if (!adapter) throw new Error(`Unsupported video provider: ${provider}`)
+export function getVideoAdapter(provider: string, protocol?: string | null): VideoProviderAdapter {
+  const key = provider.toLowerCase() === 'custom'
+    ? (protocol || '').toLowerCase()
+    : provider.toLowerCase()
+  const adapter = videoAdapters[key]
+  if (!adapter) {
+    throw new Error(provider.toLowerCase() === 'custom'
+      ? `自定义视频协议未选择或不受支持：${protocol || '(空)'}`
+      : `Unsupported video provider: ${provider}`)
+  }
   return adapter
 }
