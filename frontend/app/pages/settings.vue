@@ -475,7 +475,18 @@
             <input v-model.number="cfgForm.priority" class="input" type="number" min="0" max="999" />
             <span class="field-hint">{{ t('settings.cfg.priorityHint') }}</span>
           </label>
-          <label class="field"><span class="field-label">API Key</span><input v-model="cfgForm.api_key" class="input" type="password" placeholder="sk-..." /></label>
+          <label class="field">
+            <span class="field-label">API Key</span>
+            <input
+              v-model="cfgForm.api_key"
+              class="input"
+              type="password"
+              :placeholder="cfgForm.provider === 'jimeng' ? 'AccessKey:SecretKey' : cfgForm.provider === 'libtv' ? 'LibTV Access Key' : 'sk-...'"
+            />
+            <span v-if="cfgForm.provider === 'jimeng'" class="field-hint">即梦填 AccessKey:SecretKey；火山 Visual API，Region cn-north-1 / Service cv</span>
+            <span v-else-if="cfgForm.provider === 'libtv'" class="field-hint">LibTV Access Key，作为 Bearer Token 使用</span>
+            <span v-else-if="cfgForm.provider === 'kling'" class="field-hint">Kling 新版 API Key（不是 AccessKey/SecretKey）</span>
+          </label>
           <label class="field"><span class="field-label">Base URL</span><input v-model="cfgForm.base_url" class="input" placeholder="https://..." /></label>
           <label v-if="isCustomProtocol" class="field">
             <span class="field-label">协议适配</span>
@@ -708,7 +719,7 @@ const serviceTypes = computed(() => [
   { type: 'image', label: t('common.serviceType.image') },
   { type: 'video', label: t('common.serviceType.video') },
 ])
-const providers = ['gemini', 'openai', 'deepseek', 'volcengine', 'minimax', 'aliyun', 'custom']
+const providers = ['gemini', 'openai', 'deepseek', 'volcengine', 'minimax', 'aliyun', 'kling', 'jimeng', 'libtv', 'custom']
 const providerSelectOptions = computed(() => providers.map(p => ({ label: p, value: p })))
 /** 自定义图片/视频服务的协议适配器（存 endpoint） */
 const customProtocolOptions = computed(() => {
@@ -721,6 +732,9 @@ const customProtocolOptions = computed(() => {
     { label: '阿里云 Wan', value: 'aliyun' },
     { label: '火山引擎 Seedance', value: 'volcengine' },
     { label: 'MiniMax H3', value: 'minimax' },
+    { label: 'Kling', value: 'kling' },
+    { label: '即梦 Visual API', value: 'jimeng' },
+    { label: 'LibTV 会话', value: 'libtv' },
   ]
   return []
 })
@@ -755,6 +769,9 @@ const providerPresets = {
     { key: 'aliyun', provider: 'aliyun', label: '阿里云百炼 Wan 3.0', baseUrl: 'https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com', models: ['wan3.0-video', 'wan3.0-video-prime'] },
     { key: 'volcengine', provider: 'volcengine', label: 'Seedance 2.0 官方', baseUrl: 'https://ark.cn-beijing.volces.com', models: ['doubao-seedance-2-0-mini-260615', 'doubao-seedance-2-0-fast-260128', 'doubao-seedance-2-0-260128'] },
     { key: 'minimax', provider: 'minimax', label: 'MiniMax H3 官方', baseUrl: 'https://api.minimaxi.com', models: ['MiniMax-H3'] },
+    { key: 'kling', provider: 'kling', label: 'Kling 3.0 Turbo', baseUrl: 'https://api-singapore.klingai.com', models: ['kling-3.0-turbo'] },
+    { key: 'jimeng', provider: 'jimeng', label: '即梦视频 3.0（火山 Visual API）', baseUrl: 'https://visual.volcengineapi.com', models: ['jimeng_t2v_v30_1080p', 'jimeng_i2v_first_v30_1080', 'jimeng_i2v_first_tail_v30_1080'] },
+    { key: 'libtv', provider: 'libtv', label: 'LibTV 会话', baseUrl: 'https://im.liblib.tv', models: ['libtv'] },
     { key: 'custom', provider: 'custom', label: '自定义', baseUrl: '', models: [], endpoint: 'aliyun' },
   ],
 }

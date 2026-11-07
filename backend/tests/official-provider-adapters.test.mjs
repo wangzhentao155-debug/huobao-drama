@@ -58,7 +58,7 @@ test('backend rejects unsupported providers at DB and route boundaries', () => {
   assert.match(ai, /officialProviders/)
   assert.match(ai, /text:\s*\[[^\]]*'openai'[^\]]*'gemini'[^\]]*'volcengine'[^\]]*'deepseek'[^\]]*'custom'[^\]]*\]/s)
   assert.match(ai, /image:\s*\[[^\]]*'openai'[^\]]*'gemini'[^\]]*'volcengine'[^\]]*'custom'[^\]]*\]/s)
-  assert.match(ai, /video:\s*\[[^\]]*'volcengine'[^\]]*'minimax'[^\]]*'aliyun'[^\]]*'custom'[^\]]*\]/s)
+  assert.match(ai, /video:\s*\[[^\]]*'volcengine'[^\]]*'minimax'[^\]]*'aliyun'[^\]]*'kling'[^\]]*'jimeng'[^\]]*'libtv'[^\]]*'custom'[^\]]*\]/s)
   assert.doesNotMatch(ai, /'ali'/)
   assert.doesNotMatch(ai, /'vidu'/)
   assert.doesNotMatch(ai, /audio:\s*\[/)
@@ -78,7 +78,7 @@ test('custom image/video adapters resolve by endpoint protocol', () => {
 
   assert.match(ai, /customProtocols/)
   assert.match(ai, /image:\s*\[\s*'openai',\s*'gemini',\s*'volcengine'\s*\]/)
-  assert.match(ai, /video:\s*\[\s*'aliyun',\s*'volcengine',\s*'minimax'\s*\]/)
+  assert.match(ai, /video:\s*\[\s*'aliyun',\s*'volcengine',\s*'minimax',\s*'kling',\s*'jimeng',\s*'libtv'\s*\]/)
   assert.match(registry, /provider\.toLowerCase\(\) === 'custom'/)
   assert.match(registry, /imageAdapters\[key\]/)
   assert.match(registry, /videoAdapters\[key\]/)

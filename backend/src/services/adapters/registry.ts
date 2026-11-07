@@ -8,6 +8,9 @@ import { VolcEngineImageAdapter } from './volcengine-image'
 import { VolcEngineVideoAdapter } from './volcengine-video'
 import { MiniMaxVideoAdapter } from './minimax-video'
 import { AliyunWanVideoAdapter } from './aliyun-wan-video'
+import { KlingVideoAdapter } from './kling-video'
+import { JimengVideoAdapter } from './jimeng-video'
+import { LibTVVideoAdapter } from './libtv-video'
 import type { ImageProviderAdapter, VideoProviderAdapter } from './types'
 
 // 图片 Adapter 注册表
@@ -22,6 +25,9 @@ export const videoAdapters: Record<string, VideoProviderAdapter> = {
   volcengine: new VolcEngineVideoAdapter(),
   minimax: new MiniMaxVideoAdapter(),
   aliyun: new AliyunWanVideoAdapter(),
+  kling: new KlingVideoAdapter(),
+  jimeng: new JimengVideoAdapter(),
+  libtv: new LibTVVideoAdapter(),
 }
 
 /**

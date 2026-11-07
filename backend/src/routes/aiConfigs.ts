@@ -5,6 +5,7 @@ import { success, notFound, created, badRequest, now } from '../utils/response.j
 import { toSnakeCase } from '../utils/transform.js'
 import { joinProviderUrl } from '../services/adapters/url.js'
 import { isOfficialProvider, parseConfigTemperature, customProtocols } from '../services/ai.js'
+import { JimengVideoAdapter } from '../services/adapters/jimeng-video.js'
 import { redactUrl, logTaskError, logTaskProgress, logTaskSuccess } from '../utils/task-logger.js'
 
 const app = new Hono()
@@ -55,7 +56,13 @@ function validateCustomProtocol(serviceType?: string | null, provider?: string |
   return null
 }
 
-function buildProbe(serviceType: string, provider: string, baseUrl: string, model?: string, apiKey?: string, endpoint?: string | null) {
+function buildProbe(serviceType: string, provider: string, baseUrl: string, model?: string, apiKey?: string, endpoint?: string | null): {
+  method: string
+  url: string
+  headers: Record<string, string>
+  body?: any
+  reachableStatuses?: number[]
+} {
   const p = provider.toLowerCase()
   const m = model || ''
 
@@ -121,6 +128,38 @@ function buildProbe(serviceType: string, provider: string, baseUrl: string, mode
       url: joinProviderUrl(baseUrl, '/v2', '/video_generation'),
       headers: bearerHeaders(apiKey, true),
       body: {},
+    }
+  }
+
+  if (p === 'kling') {
+    // 查询一个不存在的任务：只验证域名、路径与 API Key，不创建计费任务
+    return {
+      method: 'GET',
+      url: `${(baseUrl || 'https://api-singapore.klingai.com').replace(/\/+$/, '')}/tasks?task_ids=ping`,
+      headers: bearerHeaders(apiKey, true),
+      body: undefined,
+    }
+  }
+
+  if (p === 'jimeng') {
+    // 查询不存在的任务：使用正式签名，只验证 AK/SK 与 Visual API 可达性
+    const request = new JimengVideoAdapter().buildPollRequest({
+      provider: 'jimeng',
+      baseUrl,
+      apiKey: apiKey || '',
+      model: m || 'jimeng_t2v_v30_1080p',
+    }, 'ping')
+    return request
+  }
+
+  if (p === 'libtv') {
+    // LibTV 会话不存在时返回 404 也说明域名/路径可达；不创建新会话、不消耗额度
+    return {
+      method: 'GET',
+      url: `${(baseUrl || 'https://im.liblib.tv').replace(/\/+$/, '')}/openapi/session/ping`,
+      headers: bearerHeaders(apiKey),
+      body: undefined,
+      reachableStatuses: [200, 204, 400, 401, 403, 404],
     }
   }
 
@@ -246,7 +285,7 @@ app.post('/test', async (c) => {
       body: probe.body ? JSON.stringify(probe.body) : undefined,
     })
     const text = await resp.text()
-    const reachable = [200, 204, 400, 401, 403].includes(resp.status)
+    const reachable = (probe.reachableStatuses || [200, 204, 400, 401, 403]).includes(resp.status)
     const payload = {
       ok: resp.ok,
       reachable,

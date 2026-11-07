@@ -3,8 +3,8 @@
 > 项目：AI 短剧制作平台（Huobao Drama 二次开发）
 > 记录日期：2026-11-08
 > 代码基线：`master @ b48e6b2`，工作区有 47 项未提交改动（模板/模式/编辑器等）
-> 目标版本：`4.1.0`；当前构建版本：`4.1.0`
-> 当前状态：P0、P1、P2 完成；4.1.0 结构化验收与桌面安装包验收通过
+> 目标版本：`4.2.0`；当前构建版本：`4.2.0`
+> 当前状态：P0/P1/P2 完成；4.1.0 发布验收通过；4.2.0 新增 Kling/即梦/LibTV 适配器
 > 唯一事实源：本文件。README / CLAUDE.md 是项目说明，不是本重构的进度源。
 
 ---
@@ -203,9 +203,10 @@ script → extract → storyboard → video_prompt → image → video → merge
 4.1.0-p1  八套模式包迁移（已完成）
 4.1.0-p2  专项 / 服务商 / UI / 验收（已完成）
 4.1.0     生产发布（结构化验收与桌面安装包验收通过）
+4.2.0     Kling / 即梦 / LibTV 视频适配器（当前）
 ```
 
-P0 收口版本为 `4.1.0-p0`，P1 收口版本为 `4.1.0-p1`，P2 收口版本为 `4.1.0-p2`；最终版本已切到 `4.1.0`。
+P0 收口版本为 `4.1.0-p0`，P1 收口版本为 `4.1.0-p1`，P2 收口版本为 `4.1.0-p2`；4.1.0 已验证发布，4.2.0 增加三家视频适配器。
 
 #### 版本命令
 
@@ -363,6 +364,8 @@ P1 完成后，8 套模板 × 5 个阶段全部走 policy：
 | 条件装载 | 模板 `content_flags` 决定 specialists 的 `when`；无命中不加载 |
 | 服务商包 | `providers/seedance`、`providers/kling`、`providers/jimeng`、`providers/libtv` |
 | 服务商识别 | `video_prompt` 阶段按当前视频配置 provider/协议自动匹配；未识别（如 aliyun/minimax）不加载额外包 |
+| 视频适配器 | Kling 新版 API Key；即梦火山 Visual API（AccessKey:SecretKey + V4 签名）；LibTV session OpenAPI（Bearer Access Key） |
+| 端点实测 | 假凭据探测：Kling 401、即梦 401、LibTV 200，均可达；未创建生成任务 |
 | 分层 UI | TemplateManager 显示 craft/shared/mode/specialists/provider；预览显示 source / 技能数 / 缺失 |
 | 八模式验收 | 8 套 × 5 阶段，provider=volcengine，policy 5/5，missing 0，0 超预算 |
 
@@ -393,7 +396,7 @@ P1 完成后，8 套模板 × 5 个阶段全部走 policy：
 | App 元数据 | `CFBundleName=AIShortDramaStudio`，`CFBundleIdentifier=com.aishortdrama.studio`，版本 `4.1.0` |
 | dmg 完整性 | 两份 dmg `hdiutil verify` 均 VALID |
 
-未执行项：真实模型/媒体全链路生成（需要有效 AI 配置与素材，且会产生生成费用）；Kling/即梦/LibTV 实际 API/MCP 适配器仍待做。
+未执行项：真实模型/媒体全链路生成（需要有效 AI 配置与素材，且会产生生成费用）。Kling/即梦/LibTV 适配器已实现并完成端点探测；真实生成需要用户提供有效 Key 后单独验。即梦适配器要求 `AccessKey:SecretKey`，Kling 使用新版 API Key，LibTV 使用 Access Key。
 
 ---
 
@@ -535,6 +538,7 @@ log_layer_breakdown()
 | 2026-11-08 | P2-08 | 分层技能 UI | `TemplateManager.vue`、preview source/skills/missing | 浏览器实测 craft/shared/mode/specialist/provider 分组 | 完成 |
 | 2026-11-08 | P2-09 | 八模式验收 + 4.1.0-p2 | 全量校验、8×5 provider 验收 | 8/8 模板、policy 5/5、missing 0、0 超预算、shadow 0 失败 | 完成 |
 | 2026-11-08 | 4.1.0 验收 | 全量校验 + 桌面安装包 | `release/AIShortDramaStudio-4.1.0-*.dmg`、package 文件 | dmg VALID；前端 6/6；桌面 14/14；verify 0 失败 | 完成 |
+| 2026-11-08 | 适配器 | Kling / 即梦 / LibTV | `adapters/kling-video.ts`、`jimeng-video.ts`、`libtv-video.ts`、provider 配置与探针 | 适配器测试 9/9；Kling 401、即梦 401、LibTV 200 可达；未建任务 | 完成 |
 
 ---
 
@@ -662,8 +666,8 @@ cd frontend && npm run generate
 ## 11. 当前工作单元（交接块）
 
 ```text
-当前单元：4.1.0 发布收口（提交 / tag）
-状态：结构化验收与桌面安装包验收通过；版本文件待提交
+当前单元：视频适配器收口（提交 / 真实生成验收）
+状态：Kling/即梦/LibTV 适配器已实现并完成端点探测；待提交
 已完成：
   - P0-01..P0-08：兼容层、5 个 craft、shared、影子装配
   - P1-01..P1-08：8 套模式包迁移到 modes/<mode>/<stage>
@@ -671,21 +675,22 @@ cd frontend && npm run generate
   - P2-04..P2-07：seedance/kling/jimeng/libtv 服务商包 + auto 识别
   - P2-08：TemplateManager 分层展示 + 预览 source/skills/missing
   - P2-09：8 套 × 5 阶段结构化验收，failures=0
-  - 4.1.0：前端构建、桌面构建、macOS dmg 产出与完整性校验
+  - 4.1.0：前端/桌面构建、macOS dmg 产出与校验、版本提交推送
+  - Kling/即梦/LibTV：HTTP 适配器、provider 配置、测试连接探针
 未完成：
-  - 4.1.0 版本文件提交、tag、GitHub Release
-  - 真实模型/媒体全链路验收（需要有效 AI 配置与素材）
-  - Kling/即梦/LibTV 实际适配器（当前只有提示词包；任务 #4-7 仍待做）
+  - 适配器改动提交与推送
+  - 真实模型/媒体全链路验收（需要有效 AI Key 与素材）
+  - 4.1.0 tag / GitHub Release（可选）
 验证结果：
   - npm run version:check：七项一致（4.1.0）
   - npm run verify:health：运行时返回 4.1.0
   - npm run verify:release：版本 + 类型检查 + 8/8 模板 + 0 超预算 + shadow 0 失败
-  - P2 验收：8 套 × 5 阶段，provider=volcengine，policy 5/5，missing 0
-  - 前端 6/6、桌面 14/14；dmg `hdiutil verify` VALID
+  - 适配器测试 9/9；frontend 6/6；desktop 14/14
+  - 假凭据探测：Kling 401、即梦 401、LibTV 200，均可达且未创建任务
 下一步：
-  1. 提交并推送 4.1.0 版本文件，打 `v4.1.0` tag
-  2. 用真实剧集对 8 模式做抽检，记录产物问题
-  3. 完成 Kling/即梦/LibTV 适配器后更新对应 provider 包
+  1. 提交并推送适配器改动
+  2. 提供有效 Key 后做真实提交/轮询/下载验收
+  3. 按实际生成结果调整模型默认值与时长/画幅映射
 阻塞与待决策：真实媒体全链路验收需要可用的 AI 服务配置
 ```
 

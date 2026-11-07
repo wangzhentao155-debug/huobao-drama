@@ -1,6 +1,6 @@
 {
   "name": "huobao-drama-desktop",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "productName": "AIShortDramaStudio",
   "private": true,
   "description": "AI 短剧制作平台桌面版（Electron 壳）",

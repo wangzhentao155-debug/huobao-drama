@@ -35,13 +35,13 @@ export const officialProviders: Record<ServiceType, readonly string[]> = {
   // custom: 任意端点。文本按 OpenAI 兼容协议直接调用；图片/视频通过 endpoint 指定协议适配器
   text: ['openai', 'gemini', 'volcengine', 'deepseek', 'custom'],
   image: ['openai', 'gemini', 'volcengine', 'custom'],
-  video: ['volcengine', 'minimax', 'aliyun', 'custom'],
+  video: ['volcengine', 'minimax', 'aliyun', 'kling', 'jimeng', 'libtv', 'custom'],
 }
 
 /** 自定义服务可选的协议适配器 */
 export const customProtocols: Record<'image' | 'video', readonly string[]> = {
   image: ['openai', 'gemini', 'volcengine'],
-  video: ['aliyun', 'volcengine', 'minimax'],
+  video: ['aliyun', 'volcengine', 'minimax', 'kling', 'jimeng', 'libtv'],
 }
 
 /** 实际用于选择 Adapter 的协议：custom 取 endpoint，其余取 provider */
