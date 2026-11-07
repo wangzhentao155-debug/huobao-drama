@@ -3,8 +3,8 @@
 > 项目：AI 短剧制作平台（Huobao Drama 二次开发）
 > 记录日期：2026-11-08
 > 代码基线：`master @ b48e6b2`，工作区有 47 项未提交改动（模板/模式/编辑器等）
-> 目标版本：`4.1.0`；当前构建版本：`4.1.0-p2`
-> 当前状态：P0、P1、P2 全部完成；最终生产发布待验收
+> 目标版本：`4.1.0`；当前构建版本：`4.1.0`
+> 当前状态：P0、P1、P2 完成；4.1.0 结构化验收与桌面安装包验收通过
 > 唯一事实源：本文件。README / CLAUDE.md 是项目说明，不是本重构的进度源。
 
 ---
@@ -202,10 +202,10 @@ script → extract → storyboard → video_prompt → image → video → merge
 4.1.0-p0  兼容层与基础拆分（已完成）
 4.1.0-p1  八套模式包迁移（已完成）
 4.1.0-p2  专项 / 服务商 / UI / 验收（已完成）
-4.1.0     生产发布
+4.1.0     生产发布（结构化验收与桌面安装包验收通过）
 ```
 
-P0 收口版本为 `4.1.0-p0`，P1 收口版本为 `4.1.0-p1`，P2 收口版本为 `4.1.0-p2`；最终发布 `4.1.0` 待验收后执行 `npm run version:sync 4.1.0`。
+P0 收口版本为 `4.1.0-p0`，P1 收口版本为 `4.1.0-p1`，P2 收口版本为 `4.1.0-p2`；最终版本已切到 `4.1.0`。
 
 #### 版本命令
 
@@ -376,6 +376,25 @@ P1 完成后，8 套模板 × 5 个阶段全部走 policy：
 悬疑：无专项
 ```
 
+### 3.9 4.1.0 发布验收结果
+
+| 项 | 结果 |
+|---|---|
+| 版本 | `4.1.0`，7 项版本校验一致 |
+| 后端类型检查 | 通过 |
+| 8 模板校验 | 8/8，policy 5/5 阶段 |
+| 技能审计 | 0 超预算 |
+| 影子装配 | 8 × 5，0 失败 |
+| 前端构建 | `.output/public` 成功 |
+| 前端测试 | 6/6 |
+| 桌面构建 | `build:main` + `build:backend` 成功 |
+| 桌面测试 | 14/14 |
+| macOS 安装包 | `AIShortDramaStudio-4.1.0-arm64.dmg`、`AIShortDramaStudio-4.1.0.dmg` |
+| App 元数据 | `CFBundleName=AIShortDramaStudio`，`CFBundleIdentifier=com.aishortdrama.studio`，版本 `4.1.0` |
+| dmg 完整性 | 两份 dmg `hdiutil verify` 均 VALID |
+
+未执行项：真实模型/媒体全链路生成（需要有效 AI 配置与素材，且会产生生成费用）；Kling/即梦/LibTV 实际 API/MCP 适配器仍待做。
+
 ---
 
 ## 4. 装载、路由与防混乱
@@ -515,6 +534,7 @@ log_layer_breakdown()
 | 2026-11-08 | P2-04..07 | 四个服务商包 | `skills/providers/*`、provider 识别/预览 | volcengine→seedance、kling、jimeng、libtv 均可装载，missing 0 | 完成 |
 | 2026-11-08 | P2-08 | 分层技能 UI | `TemplateManager.vue`、preview source/skills/missing | 浏览器实测 craft/shared/mode/specialist/provider 分组 | 完成 |
 | 2026-11-08 | P2-09 | 八模式验收 + 4.1.0-p2 | 全量校验、8×5 provider 验收 | 8/8 模板、policy 5/5、missing 0、0 超预算、shadow 0 失败 | 完成 |
+| 2026-11-08 | 4.1.0 验收 | 全量校验 + 桌面安装包 | `release/AIShortDramaStudio-4.1.0-*.dmg`、package 文件 | dmg VALID；前端 6/6；桌面 14/14；verify 0 失败 | 完成 |
 
 ---
 
@@ -642,8 +662,8 @@ cd frontend && npm run generate
 ## 11. 当前工作单元（交接块）
 
 ```text
-当前单元：最终生产发布验收
-状态：P0、P1、P2 完成；4.1.0 待发布
+当前单元：4.1.0 发布收口（提交 / tag）
+状态：结构化验收与桌面安装包验收通过；版本文件待提交
 已完成：
   - P0-01..P0-08：兼容层、5 个 craft、shared、影子装配
   - P1-01..P1-08：8 套模式包迁移到 modes/<mode>/<stage>
@@ -651,19 +671,21 @@ cd frontend && npm run generate
   - P2-04..P2-07：seedance/kling/jimeng/libtv 服务商包 + auto 识别
   - P2-08：TemplateManager 分层展示 + 预览 source/skills/missing
   - P2-09：8 套 × 5 阶段结构化验收，failures=0
+  - 4.1.0：前端构建、桌面构建、macOS dmg 产出与完整性校验
 未完成：
+  - 4.1.0 版本文件提交、tag、GitHub Release
   - 真实模型/媒体全链路验收（需要有效 AI 配置与素材）
   - Kling/即梦/LibTV 实际适配器（当前只有提示词包；任务 #4-7 仍待做）
-  - 最终版本 4.1.0 打 tag / 发布
 验证结果：
-  - npm run version:check：七项一致（4.1.0-p2）
-  - npm run verify:health：运行时返回 4.1.0-p2
+  - npm run version:check：七项一致（4.1.0）
+  - npm run verify:health：运行时返回 4.1.0
   - npm run verify:release：版本 + 类型检查 + 8/8 模板 + 0 超预算 + shadow 0 失败
   - P2 验收：8 套 × 5 阶段，provider=volcengine，policy 5/5，missing 0
+  - 前端 6/6、桌面 14/14；dmg `hdiutil verify` VALID
 下一步：
-  1. 用真实剧集对 8 模式做抽检，记录产物问题
-  2. 完成 Kling/即梦/LibTV 适配器后更新对应 provider 包
-  3. 验收通过后 `npm run version:sync 4.1.0`，再打包发布
+  1. 提交并推送 4.1.0 版本文件，打 `v4.1.0` tag
+  2. 用真实剧集对 8 模式做抽检，记录产物问题
+  3. 完成 Kling/即梦/LibTV 适配器后更新对应 provider 包
 阻塞与待决策：真实媒体全链路验收需要可用的 AI 服务配置
 ```
 
