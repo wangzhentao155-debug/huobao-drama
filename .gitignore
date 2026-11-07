@@ -54,6 +54,10 @@ backend/workspace/*
 !backend/workspace/templates/
 backend/workspace/templates/.backups/
 
+# Frontend build artifacts and local screenshots
+/frontend/dist
+/screenshots/
+
 # Desktop (Electron) build artifacts
 desktop/node_modules/
 desktop/build/
