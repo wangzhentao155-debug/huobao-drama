@@ -1636,7 +1636,7 @@ function onWorkflowStage(stageId) {
   if (stageId === 'merge') return goMainStage('export')
 }
 
-// ===== V1–V5 质量校验（API 只读，不阻断制作） =====
+// ===== V1–V7 质量校验（API 只读，不阻断制作） =====
 const validation = ref(null)
 const validationOpen = ref(false)
 const validationLoading = ref(false)

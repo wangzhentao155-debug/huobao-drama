@@ -18,3 +18,11 @@ test('settings page manages style presets in the base tab group', () => {
   assert.match(settings, /styleToDelete/)
   assert.match(settings, /<ConfirmDialog/)
 })
+
+test('useApi exposes style preset endpoints', () => {
+  const useApi = read('app/composables/useApi.ts')
+  assert.match(useApi, /export const stylePresetAPI/)
+  assert.match(useApi, /\/style-presets/)
+  assert.match(useApi, /\?all=1/)
+  assert.match(useApi, /list: \(all = false\)/)
+})

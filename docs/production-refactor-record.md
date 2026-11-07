@@ -573,7 +573,7 @@ log_layer_breakdown()
 | 2026-11-08 | V1–V5 | 确定性校验器 | `services/validators.ts`、`scripts/validate-episode.ts`、episodes validation API | 单元测试通过；真实剧集 #2：0 error | 完成 |
 | 2026-11-08 | V1–V7 UI | 工作流栏校验入口与结果面板 | `episode.vue`、`useApi.ts` | 浏览器实测 V1–V7 卡片、筛选、问题列表正常 | 完成 |
 | 2026-11-08 | V6–V7 | 生成/合成回执校验 | `validators.ts` 生成回执/合成回执、文件存在性检查 | 单元测试 8/8；真实剧集 #2：V6 35 warning、V7 1 warning | 完成 |
-| 2026-11-08 | 测试基线 | 修复 33 个过期结构测试并全量回归 | 前后端 17 个测试文件对齐当前路由/服务/UI 契约 | 后端 52+56、前端 43、桌面 7+7，共 165 全绿 | 完成 |
+| 2026-11-08 | 测试基线 | 修复 33 个过期结构测试并全量回归 | 前后端 17 个测试文件对齐当前路由/服务/UI 契约 | 后端 52+56、前端 44、桌面 7+7，共 166 全绿 | 完成 |
 
 ---
 
@@ -724,7 +724,7 @@ cd frontend && npm run generate
   - npm run version:check：七项一致（4.2.0）
   - npm run verify:health：运行时返回 4.2.0
   - npm run verify:release：版本 + 类型检查 + 8/8 模板 + 0 超预算 + shadow 0 失败
-  - 适配器测试 9/9；frontend 6/6；desktop 14/14；校验器 8/8
+  - 适配器测试 9/9；backend 52+56、frontend 44、desktop 7+7，共 166 全绿；校验器 8/8
   - 真实剧集 #2：V1–V7 全部 0 error / 56 warning
   - 假凭据探测：Kling 401、即梦 401、LibTV 200，均可达且未创建任务
   - Release: https://github.com/wangzhentao155-debug/huobao-drama/releases/tag/v4.2.0

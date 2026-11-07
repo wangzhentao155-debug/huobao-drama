@@ -1,8 +1,8 @@
 /**
- * 命令行运行 V1–V5 校验：
+ * 命令行运行 V1–V7 校验：
  *   cd backend && npx tsx scripts/validate-episode.ts <episodeId> [stage]
  *
- * stage 可选：script / extract / storyboard / video_prompt / style（或 V1–V5）
+ * stage 可选：script / extract / storyboard / video_prompt / style / generation / merge（或 V1–V7）
  * 有错误时退出码为 1，便于 CI/验收脚本使用。
  */
 import { validateEpisode, validateStage } from '../src/services/validators.js'
