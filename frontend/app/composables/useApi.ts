@@ -61,6 +61,10 @@ export const workflowAPI = {
   get: (episodeId: number) => api.get(`/episodes/${episodeId}/workflow`),
 }
 
+export const validationAPI = {
+  get: (episodeId: number, stage?: string) => api.get(`/episodes/${episodeId}/validation${stage ? `?stage=${encodeURIComponent(stage)}` : ''}`),
+}
+
 export const episodeAPI = {
   create: (data: any) => api.post('/episodes', data),
   update: (id: number, data: any) => api.put(`/episodes/${id}`, data),

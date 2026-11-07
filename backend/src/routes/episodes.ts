@@ -8,6 +8,7 @@ import { EXTRACT_TARGETS, getExtractionStatus, startExtraction, type ExtractTarg
 import { getVideoPromptBatchStatus, startVideoPromptBatch } from '../services/video-prompts.js'
 import { resolveModeContext } from '../services/mode-context.js'
 import { getEpisodeWorkflowStatus } from '../services/workflow-status.js'
+import { validateEpisode, validateStage } from '../services/validators.js'
 
 const app = new Hono()
 
@@ -279,6 +280,19 @@ app.get('/:id/generation-tasks', async (c) => {
     tasks: toSnakeCaseArray(tasks),
     merges: toSnakeCaseArray(merges),
   })
+})
+
+app.get('/:id/validation', async (c) => {
+  const episodeId = Number(c.req.param('id'))
+  const [ep] = await db.select().from(schema.episodes).where(eq(schema.episodes.id, episodeId))
+  if (!ep) return notFound(c, '剧集不存在')
+  const stage = c.req.query('stage')
+  try {
+    if (stage) return success(c, await validateStage(stage, episodeId, ep.dramaId))
+    return success(c, await validateEpisode(episodeId, ep.dramaId))
+  } catch (err: any) {
+    return badRequest(c, err?.message || '校验失败')
+  }
 })
 
 app.get('/:id/pipeline-status', async (c) => {

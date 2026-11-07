@@ -188,8 +188,8 @@ script → extract → storyboard → video_prompt → image → video → merge
 
 | 项 | 值 |
 |---|---|
-| 目标生产版本 | `4.1.0` |
-| 当前构建版本 | `4.1.0-p0` |
+| 目标生产版本 | `4.2.0` |
+| 当前构建版本 | `4.2.0` |
 | 单一来源 | 根目录 `VERSION` |
 | 同步范围 | 根 / backend / frontend / desktop 四个 `package.json`，以及 backend / frontend / desktop 三个 `package-lock.json` |
 | 运行时优先级 | `HUOBAO_VERSION` 环境变量 > `VERSION` > `package.json` |
@@ -398,6 +398,34 @@ P1 完成后，8 套模板 × 5 个阶段全部走 policy：
 
 未执行项：真实模型/媒体全链路生成（需要有效 AI 配置与素材，且会产生生成费用）。Kling/即梦/LibTV 适配器已实现并完成端点探测；真实生成需要用户提供有效 Key 后单独验。即梦适配器要求 `AccessKey:SecretKey`，Kling 使用新版 API Key，LibTV 使用 Access Key。
 
+### 3.10 V1–V7 校验器
+
+| ID | 检查 | 主要规则 |
+|---|---|---|
+| V1 | 剧本契约 | 场景头、场景编号、对白、镜头语言、心理描写、开场/结尾钩子 |
+| V2 | 资产账本 | 角色样貌/妆造、场景锚点/光、道具外观、重复名、剧本覆盖 |
+| V3 | 分镜契约 | 镜号连续、场景绑定与覆盖、时长、必填镜头字段、台词覆盖 |
+| V4 | 提示词契约 | 信息头、3 秒分段连续、@引用合法、新增台词、长度 |
+| V5 | 风格锁 | 项目风格存在、模板不得覆盖风格、生图提示词含风格锚点 |
+| V6 | 生成回执 | 任务失败、处理中、本地文件缺失、上游地址未落盘、资产/分镜未生成 |
+| V7 | 合成回执 | 合成失败/处理中、成片文件缺失、参与镜头缺失、时长偏差 |
+
+已接入口：
+
+```text
+GET /api/v1/episodes/:id/validation
+GET /api/v1/episodes/:id/validation?stage=script|extract|storyboard|video_prompt|style|generation|merge
+cd backend && npx tsx scripts/validate-episode.ts <episodeId> [stage]
+```
+
+实现原则：
+
+- 只读、确定性，不调用模型。
+- 保存不受阻；返回结构化 `errors/warnings`，供后续 Agent 修 1 次或人工处理。
+- 真实剧集 #2 实测：V1–V7 全部 0 error，56 warning（V1 钩子 2、V4 信息头 18、V6 未生成 35、V7 未合成 1）。
+- 单元测试：8/8。
+- 前端：工作流栏「质量校验」入口，展开 V1–V7 卡片、错误/警告筛选和问题列表；浏览器实测正常。
+
 ---
 
 ## 4. 装载、路由与防混乱
@@ -539,6 +567,13 @@ log_layer_breakdown()
 | 2026-11-08 | P2-09 | 八模式验收 + 4.1.0-p2 | 全量校验、8×5 provider 验收 | 8/8 模板、policy 5/5、missing 0、0 超预算、shadow 0 失败 | 完成 |
 | 2026-11-08 | 4.1.0 验收 | 全量校验 + 桌面安装包 | `release/AIShortDramaStudio-4.1.0-*.dmg`、package 文件 | dmg VALID；前端 6/6；桌面 14/14；verify 0 失败 | 完成 |
 | 2026-11-08 | 适配器 | Kling / 即梦 / LibTV | `adapters/kling-video.ts`、`jimeng-video.ts`、`libtv-video.ts`、provider 配置与探针 | 适配器测试 9/9；Kling 401、即梦 401、LibTV 200 可达；未建任务 | 完成 |
+| 2026-11-08 | 4.2.0 | 适配器提交推送 | commit `a0cb0a4`；版本 4.2.0 | 19 文件；typecheck/测试通过 | 完成 |
+| 2026-11-08 | v4.2.0 | GitHub Release + macOS 资产 | tag `v4.2.0`；4 个 dmg/zip | 资产上传成功；dmg VALID | 完成 |
+| 2026-11-08 | 仓库整理 | 忽略构建产物 | `.gitignore`；commit `c91ce1d` | `frontend/dist`、`screenshots/` 已忽略；工作区干净 | 完成 |
+| 2026-11-08 | V1–V5 | 确定性校验器 | `services/validators.ts`、`scripts/validate-episode.ts`、episodes validation API | 单元测试通过；真实剧集 #2：0 error | 完成 |
+| 2026-11-08 | V1–V7 UI | 工作流栏校验入口与结果面板 | `episode.vue`、`useApi.ts` | 浏览器实测 V1–V7 卡片、筛选、问题列表正常 | 完成 |
+| 2026-11-08 | V6–V7 | 生成/合成回执校验 | `validators.ts` 生成回执/合成回执、文件存在性检查 | 单元测试 8/8；真实剧集 #2：V6 35 warning、V7 1 warning | 完成 |
+| 2026-11-08 | 测试基线 | 修复 33 个过期结构测试并全量回归 | 前后端 17 个测试文件对齐当前路由/服务/UI 契约 | 后端 52+56、前端 43、桌面 7+7，共 165 全绿 | 完成 |
 
 ---
 
@@ -666,8 +701,8 @@ cd frontend && npm run generate
 ## 11. 当前工作单元（交接块）
 
 ```text
-当前单元：视频适配器收口（提交 / 真实生成验收）
-状态：Kling/即梦/LibTV 适配器已实现并完成端点探测；待提交
+当前单元：V1–V7 校验器接线与验收
+状态：V1–V7 服务/API/CLI + 前端展示完成；阶段保存流程接线待做
 已完成：
   - P0-01..P0-08：兼容层、5 个 craft、shared、影子装配
   - P1-01..P1-08：8 套模式包迁移到 modes/<mode>/<stage>
@@ -676,21 +711,27 @@ cd frontend && npm run generate
   - P2-08：TemplateManager 分层展示 + 预览 source/skills/missing
   - P2-09：8 套 × 5 阶段结构化验收，failures=0
   - 4.1.0：前端/桌面构建、macOS dmg 产出与校验、版本提交推送
-  - Kling/即梦/LibTV：HTTP 适配器、provider 配置、测试连接探针
+  - 4.2.0：Kling/即梦/LibTV HTTP 适配器、provider 配置、测试探针
+  - v4.2.0 GitHub Release + 4 个 macOS 资产
+  - V1–V7 校验器 + API/CLI + 真实剧集实测
+  - V1–V7 前端入口与结果面板（工作流栏「质量校验」）
 未完成：
-  - 适配器改动提交与推送
   - 真实模型/媒体全链路验收（需要有效 AI Key 与素材）
-  - 4.1.0 tag / GitHub Release（可选）
+  - V1–V7 接入阶段保存/执行流程（当前为手动触发门禁）
+  - 声音/字幕/BGM/成片 QC
+  - Windows 安装包、macOS 签名/公证
 验证结果：
-  - npm run version:check：七项一致（4.1.0）
-  - npm run verify:health：运行时返回 4.1.0
+  - npm run version:check：七项一致（4.2.0）
+  - npm run verify:health：运行时返回 4.2.0
   - npm run verify:release：版本 + 类型检查 + 8/8 模板 + 0 超预算 + shadow 0 失败
-  - 适配器测试 9/9；frontend 6/6；desktop 14/14
+  - 适配器测试 9/9；frontend 6/6；desktop 14/14；校验器 8/8
+  - 真实剧集 #2：V1–V7 全部 0 error / 56 warning
   - 假凭据探测：Kling 401、即梦 401、LibTV 200，均可达且未创建任务
+  - Release: https://github.com/wangzhentao155-debug/huobao-drama/releases/tag/v4.2.0
 下一步：
-  1. 提交并推送适配器改动
+  1. 把 V1–V7 接到阶段保存/执行流程（失败回 Agent 修 1 次）
   2. 提供有效 Key 后做真实提交/轮询/下载验收
-  3. 按实际生成结果调整模型默认值与时长/画幅映射
+  3. 声音/字幕/BGM/成片 QC
 阻塞与待决策：真实媒体全链路验收需要可用的 AI 服务配置
 ```
 

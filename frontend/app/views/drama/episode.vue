@@ -97,6 +97,71 @@
           <span v-if="workflowStatus[stage.id]?.detail" class="workflow-chip-detail">{{ workflowStatus[stage.id].detail }}</span>
         </button>
       </div>
+      <button
+        class="workflow-validate-btn"
+        :class="{ ok: validation?.ok, bad: validation && !validation.ok }"
+        :disabled="validationLoading"
+        @click="toggleValidation"
+      >
+        {{ validationLoading ? '校验中…' : '质量校验' }}
+        <span v-if="validation" class="workflow-validate-count">{{ validation.errors }}/{{ validation.warnings }}</span>
+      </button>
+    </div>
+
+    <div v-if="validationOpen" class="validation-panel">
+      <div class="validation-head">
+        <div class="validation-title">
+          质量校验
+          <span v-if="validation" :class="['validation-status', validation.ok ? 'ok' : 'bad']">
+            {{ validation.ok ? '通过' : '未通过' }}
+          </span>
+        </div>
+        <div class="validation-head-actions">
+          <span v-if="validation" class="validation-meta">
+            错误 {{ validation.errors }} · 警告 {{ validation.warnings }} · {{ formatValidationTime(validation.generatedAt) }}
+          </span>
+          <button class="btn btn-sm" :disabled="validationLoading" @click="runValidation">重新校验</button>
+          <button class="btn btn-sm" @click="validationOpen = false">关闭</button>
+        </div>
+      </div>
+
+      <div v-if="validation" class="validation-cards">
+        <div
+          v-for="result in validation.results"
+          :key="result.id"
+          :class="['validation-card', { bad: !result.ok, warn: result.ok && result.warnings }]"
+        >
+          <div class="validation-card-head">
+            <span>{{ result.id }} · {{ result.name }}</span>
+            <span>{{ result.ok ? '通过' : '需处理' }}</span>
+          </div>
+          <div class="validation-card-counts">
+            <span class="is-error">{{ result.errors }} 错误</span>
+            <span class="is-warning">{{ result.warnings }} 警告</span>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="validation" class="validation-issues">
+        <div class="validation-filters">
+          <button :class="{ active: validationFilter === 'all' }" @click="validationFilter = 'all'">全部 {{ validationIssues.length }}</button>
+          <button :class="{ active: validationFilter === 'error' }" @click="validationFilter = 'error'">错误 {{ validationErrors.length }}</button>
+          <button :class="{ active: validationFilter === 'warning' }" @click="validationFilter = 'warning'">警告 {{ validationWarnings.length }}</button>
+        </div>
+        <div v-if="!filteredValidationIssues.length" class="validation-empty">没有需要展示的校验问题</div>
+        <ul v-else class="validation-list">
+          <li
+            v-for="(issue, index) in filteredValidationIssues.slice(0, 80)"
+            :key="`${issue.validator}-${issue.code}-${index}`"
+            :class="['validation-issue', issue.severity]"
+          >
+            <span class="validation-issue-tag">{{ issue.validator }}</span>
+            <span class="validation-issue-code">{{ issue.code }}</span>
+            <span class="validation-issue-msg">{{ issue.message }}</span>
+          </li>
+        </ul>
+        <p v-if="filteredValidationIssues.length > 80" class="validation-empty">仅展示前 80 条，完整结果请查看校验 API/CLI。</p>
+      </div>
     </div>
 
     <div class="studio-body">
@@ -1483,7 +1548,7 @@ import {
   Users, FileText, FolderKanban, Clapperboard, Download, Loader2,
   Plus, X, ListTodo, CircleHelp,
 } from 'lucide-vue-next'
-import { api, dramaAPI, episodeAPI, storyboardAPI, characterAPI, sceneAPI, propAPI, taskAPI, mergeAPI, aiConfigAPI, uploadAPI, workflowAPI, templateAPI } from '~/composables/useApi'
+import { api, dramaAPI, episodeAPI, storyboardAPI, characterAPI, sceneAPI, propAPI, taskAPI, mergeAPI, aiConfigAPI, uploadAPI, workflowAPI, templateAPI, validationAPI } from '~/composables/useApi'
 import { startTour, autoTour } from '~/composables/useTour'
 import { useAgent } from '~/composables/useAgent'
 import { resolveTextModelSelection } from '~/utils/text-model-selection'
@@ -1550,6 +1615,8 @@ const activeWorkflowStage = computed(() =>
 
 async function loadWorkflow(id = epId.value) {
   if (!id) return
+  validation.value = null
+  validationOpen.value = false
   try {
     const res = await workflowAPI.get(id)
     workflowStages.value = res?.workflow?.stages || []
@@ -1567,6 +1634,48 @@ function onWorkflowStage(stageId) {
   if (stageId === 'extract' || stageId === 'image') return goSubStep('prod:assets')
   if (stageId === 'storyboard' || stageId === 'video_prompt' || stageId === 'video') return goSubStep('prod:videos')
   if (stageId === 'merge') return goMainStage('export')
+}
+
+// ===== V1–V5 质量校验（API 只读，不阻断制作） =====
+const validation = ref(null)
+const validationOpen = ref(false)
+const validationLoading = ref(false)
+const validationFilter = ref('all')
+const validationIssues = computed(() => (validation.value?.results || []).flatMap(result =>
+  (result.issues || []).map(issue => ({ ...issue, validator: result.id }))))
+const validationErrors = computed(() => validationIssues.value.filter(issue => issue.severity === 'error'))
+const validationWarnings = computed(() => validationIssues.value.filter(issue => issue.severity === 'warning'))
+const filteredValidationIssues = computed(() => {
+  if (validationFilter.value === 'error') return validationErrors.value
+  if (validationFilter.value === 'warning') return validationWarnings.value
+  return validationIssues.value
+})
+
+async function runValidation() {
+  if (!epId.value || validationLoading.value) return
+  validationLoading.value = true
+  validationOpen.value = true
+  try {
+    validation.value = await validationAPI.get(epId.value)
+    validationFilter.value = 'all'
+  } catch (e) {
+    toastError(e)
+  } finally {
+    validationLoading.value = false
+  }
+}
+
+function toggleValidation() {
+  if (validationOpen.value) {
+    validationOpen.value = false
+    return
+  }
+  runValidation()
+}
+
+function formatValidationTime(value) {
+  if (!value) return ''
+  try { return new Date(value).toLocaleTimeString() } catch { return '' }
 }
 const rawLen = computed(() => localRaw.value.replace(/\s/g, '').length || 0)
 const scriptLen = computed(() => localScript.value.replace(/\s/g, '').length || 0)
@@ -6334,4 +6443,37 @@ button.video-task-metric.on { box-shadow: 0 0 0 2px var(--accent); }
 .workflow-chip.active .workflow-chip-dot { background: #ff7a45; }
 .workflow-chip.confirm::after { content: ' · ' attr(data-confirm); font-size: 9px; opacity: .5; }
 .workflow-chip-detail { opacity: .6; }
+.workflow-validate-btn { margin-left: auto; display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgba(255,255,255,.18); background: transparent; color: inherit; font-size: 11px; white-space: nowrap; cursor: pointer; }
+.workflow-validate-btn:hover { background: rgba(255,255,255,.06); }
+.workflow-validate-btn.ok { border-color: rgba(62,207,142,.5); color: #3ecf8e; }
+.workflow-validate-btn.bad { border-color: rgba(239,83,80,.55); color: #ef5350; }
+.workflow-validate-count { font-variant-numeric: tabular-nums; opacity: .8; }
+.validation-panel { border-bottom: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.025); padding: 12px 16px 14px; }
+.validation-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.validation-title { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.validation-status { font-size: 10px; padding: 2px 7px; border-radius: 999px; border: 1px solid currentColor; }
+.validation-status.ok { color: #3ecf8e; }
+.validation-status.bad { color: #ef5350; }
+.validation-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.validation-meta { font-size: 11px; opacity: .62; }
+.validation-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; margin-top: 10px; }
+.validation-card { border: 1px solid rgba(255,255,255,.1); border-radius: 8px; padding: 8px 10px; background: rgba(255,255,255,.025); }
+.validation-card.bad { border-color: rgba(239,83,80,.45); }
+.validation-card.warn { border-color: rgba(255,179,0,.35); }
+.validation-card-head { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; font-weight: 650; }
+.validation-card-counts { display: flex; gap: 10px; margin-top: 4px; font-size: 10px; opacity: .85; }
+.validation-card-counts .is-error { color: #ef5350; }
+.validation-card-counts .is-warning { color: #ffb300; }
+.validation-issues { margin-top: 10px; }
+.validation-filters { display: flex; gap: 6px; margin-bottom: 6px; }
+.validation-filters button { padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); background: transparent; color: inherit; font-size: 10px; cursor: pointer; opacity: .7; }
+.validation-filters button.active { border-color: rgba(255,122,69,.5); color: #ff7a45; opacity: 1; }
+.validation-list { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+.validation-issue { display: flex; gap: 8px; align-items: baseline; padding: 4px 6px; border-radius: 5px; background: rgba(255,255,255,.03); font-size: 11px; }
+.validation-issue.error { border-left: 2px solid #ef5350; }
+.validation-issue.warning { border-left: 2px solid #ffb300; }
+.validation-issue-tag { flex: none; font-weight: 700; opacity: .7; }
+.validation-issue-code { flex: none; opacity: .5; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.validation-issue-msg { min-width: 0; }
+.validation-empty { margin: 4px 0; font-size: 11px; opacity: .55; }
 </style>
