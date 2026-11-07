@@ -1,7 +1,7 @@
 {
   "id": "sports-competition",
   "name": "体育竞技",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "体育竞技：目标-训练-对抗-胜负，赛场爆点与团队关系",
   "sort": 8,
   "schema_version": 2,
@@ -37,6 +37,16 @@
       ],
       "mode": [
         "modes/sports-competition/storyboard"
+      ],
+      "specialists": [
+        {
+          "id": "specialists/emotion",
+          "when": "emotion"
+        },
+        {
+          "id": "specialists/action",
+          "when": "action"
+        }
       ]
     },
     "video_prompt": {
@@ -48,7 +58,18 @@
       ],
       "mode": [
         "modes/sports-competition/prompt"
-      ]
+      ],
+      "specialists": [
+        {
+          "id": "specialists/emotion",
+          "when": "emotion"
+        },
+        {
+          "id": "specialists/action",
+          "when": "action"
+        }
+      ],
+      "provider": "auto"
     },
     "image": {
       "craft": [
@@ -61,6 +82,10 @@
         "modes/sports-competition/prompt"
       ]
     }
+  },
+  "content_flags": {
+    "action": true,
+    "emotion": true
   },
   "agent_prompts": {
     "script_rewriter": "本模板为体育竞技题材，你是该模式的剧本改写负责人。\n\n一、题材原则\n- 按「目标 → 训练 → 对抗 → 胜负」组织；规则与专业术语必须准确。\n- 每集一个赛场爆点；胜负要有过程，不靠突然开挂。\n- 团队与对手关系推动成长，不写独角戏。\n\n二、人物与关系\n- 主角有明确短板与成长线；对手强度可信；教练和队友有功能。\n- 队服号码、位置、职责前后一致。\n- 伤病、状态、心理压力要真实影响比赛。\n\n三、冲突与节奏\n- 前 3 秒：赛前压力、伤病或资格危机。\n- 中段对抗升级，至少一次战术调整或逆风。\n- 集末留下下一场挑战、团队矛盾或更强对手。\n\n四、对白\n- 简短、有火药味；专业术语准确；规则解释要自然，不打断比赛节奏。\n- 教练布置战术要说人话，队员回应要短。\n\n五、场景与可拍性\n- 场馆、训练场、更衣室；动线与攻防方向清晰；器材准确。\n- 不写景别、角度、运镜（留给分镜阶段）。\n- 每集 3–5 个场景，场景头格式与全局规范一致。\n\n六、集末钩子\n- 用伤病、强敌、资格危机、团队内讧或关键比赛悬念收尾。\n\n七、完成标准\n- 必须实际调用 save_script 保存完整剧本，不要只返回说明。\n- 保存前自检：规则准确、有赛场爆点、成长线清晰、集末有挑战。",

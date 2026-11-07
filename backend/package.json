@@ -1,6 +1,6 @@
 {
   "name": "server",
-  "version": "4.1.0-p1",
+  "version": "4.1.0-p2",
   "description": "",
   "main": "src/index.ts",
   "scripts": {

@@ -26,6 +26,15 @@ export interface SkillRef {
 export type SkillPolicyStage = 'script' | 'extract' | 'storyboard' | 'video_prompt' | 'image'
 export const SKILL_POLICY_STAGES: readonly SkillPolicyStage[] = ['script', 'extract', 'storyboard', 'video_prompt', 'image']
 
+/** 服务商/协议 → 提示词包；未命中的服务商不加载额外包 */
+const PROVIDER_SKILL_MAP: Record<string, string> = {
+  volcengine: 'providers/seedance',
+  seedance: 'providers/seedance',
+  kling: 'providers/kling',
+  jimeng: 'providers/jimeng',
+  libtv: 'providers/libtv',
+}
+
 export interface SkillPolicySpecialist {
   id: string
   /** 条件标记；未命中时不加载。P0 先保留字段，P1 接内容标记 */
@@ -78,6 +87,8 @@ export interface ProductionTemplate {
   agent_skills?: Record<string, SkillRef[]>
   /** 新格式：按阶段声明 craft/mode/specialist/provider */
   skill_policy?: SkillPolicy
+  /** 该模式默认启用的内容标记；用于 specialists 的 when 条件 */
+  content_flags?: Record<string, boolean>
   /** 固化流程：阶段顺序、开关与确认点；缺失时回退默认流程 */
   workflow?: WorkflowDefinition
   /** 阶段运行参数：temperature / maxSteps；未配置回退全局 */
@@ -280,6 +291,24 @@ function normalizeSkillIdList(raw: any): string[] {
   return out
 }
 
+/** 归一化内容标记：只保留安全的 key 与布尔值 */
+export function normalizeContentFlags(raw: any): Record<string, boolean> | undefined {
+  if (!raw || typeof raw !== 'object') return undefined
+  const out: Record<string, boolean> = {}
+  for (const [key, value] of Object.entries(raw)) {
+    if (!/^[a-z0-9][a-z0-9_-]*$/i.test(key)) continue
+    out[key] = value === true
+  }
+  return Object.keys(out).length ? out : undefined
+}
+
+/** 当前模板启用的内容标记（供 specialists 的 when 匹配） */
+export function getContentFlags(template: ProductionTemplate | null | undefined): string[] {
+  return Object.entries(template?.content_flags || {})
+    .filter(([, enabled]) => enabled === true)
+    .map(([flag]) => flag)
+}
+
 /** 归一化 skill_policy：非法 ID/阶段直接丢弃，不阻断模板其余能力 */
 export function normalizeSkillPolicy(raw: any): SkillPolicy | undefined {
   if (!raw || typeof raw !== 'object') return undefined
@@ -331,6 +360,7 @@ export function resolveSkillSelection(
   agentType: string,
   flags: string[] = [],
   mode: SkillSelectionMode = 'auto',
+  provider?: string | null,
 ): SkillSelection {
   const skillKey = stage && template?.agent_skills?.[stage] ? stage : agentType
   const legacySkillIds = getEnabledSkills(template, skillKey)
@@ -365,7 +395,10 @@ export function resolveSkillSelection(
     if (specialist.when && !flags.includes(specialist.when)) continue
     add(specialist.id, 'specialist')
   }
-  if (policy.provider && policy.provider !== 'auto') add(policy.provider, 'provider')
+  const providerSkill = policy.provider === 'auto'
+    ? PROVIDER_SKILL_MAP[(provider || '').toLowerCase()]
+    : policy.provider
+  if (providerSkill) add(providerSkill, 'provider')
 
   // 每个阶段必须有岗位专属手艺；缺失视为配置不完整，回退旧格式
   if (!skills.some(skill => skill.layer === 'craft')) {
@@ -396,6 +429,7 @@ function safeReadTemplate(dir: string): ProductionTemplate | null {
       agent_prompts: parsed.agent_prompts && typeof parsed.agent_prompts === 'object' ? parsed.agent_prompts : undefined,
       agent_skills: normalizeAgentSkills(parsed.agent_skills),
       skill_policy: normalizeSkillPolicy(parsed.skill_policy),
+      content_flags: normalizeContentFlags(parsed.content_flags),
       workflow: normalizeWorkflow(parsed.workflow) ?? undefined,
       stage_runtime: normalizeStageRuntime(parsed.stage_runtime),
     }

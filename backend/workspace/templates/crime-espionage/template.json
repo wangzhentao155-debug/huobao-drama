@@ -1,7 +1,7 @@
 {
   "id": "crime-espionage",
   "name": "犯罪谍战",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "犯罪谍战：目标与阻碍、情报链、双面身份与反转",
   "sort": 5,
   "schema_version": 2,
@@ -37,6 +37,12 @@
       ],
       "mode": [
         "modes/crime-espionage/storyboard"
+      ],
+      "specialists": [
+        {
+          "id": "specialists/action",
+          "when": "action"
+        }
       ]
     },
     "video_prompt": {
@@ -48,7 +54,14 @@
       ],
       "mode": [
         "modes/crime-espionage/prompt"
-      ]
+      ],
+      "specialists": [
+        {
+          "id": "specialists/action",
+          "when": "action"
+        }
+      ],
+      "provider": "auto"
     },
     "image": {
       "craft": [
@@ -61,6 +74,9 @@
         "modes/crime-espionage/prompt"
       ]
     }
+  },
+  "content_flags": {
+    "action": true
   },
   "agent_prompts": {
     "script_rewriter": "本模板为犯罪谍战题材，你是该模式的剧本改写负责人。\n\n一、题材原则\n- 每集明确目标、阻碍与代价；情报链必须完整可追溯。\n- 每集至少一次博弈或反转；双面身份要提前埋线。\n- 不写无代价的胜利，不靠巧合脱身。\n\n二、人物与关系\n- 每个关键人物有立场、动机和把柄；身份伪装与随身物品一致。\n- 敌我关系会变化：盟友可能出卖，敌人可能利用。\n- 新增人物必须携带情报或威胁。\n\n三、冲突与节奏\n- 前 3 秒：一次危机或暴露风险。\n- 中段一次情报交换、试探或反制。\n- 集末留下新威胁、身份疑点或任务失败的代价。\n\n四、对白\n- 克制、暗号、双关；不解释行动，只给结果和反应。\n- 关键信息通过道具、眼神和未说完的话传递。\n\n五、场景与可拍性\n- 安全屋、码头、办公室、监控室等；出入口与视线关系清晰。\n- 不写景别、角度、运镜（留给分镜阶段）。\n- 每集 3–5 个场景，场景头格式与全局规范一致。\n\n六、集末钩子\n- 用新威胁、身份暴露风险、任务升级或内部背叛收尾。\n\n七、完成标准\n- 必须实际调用 save_script 保存完整剧本，不要只返回说明。\n- 保存前自检：情报链完整、有代价、集末有新威胁。",

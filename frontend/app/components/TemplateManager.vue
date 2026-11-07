@@ -67,6 +67,27 @@
             </div>
 
             <div v-else-if="tab === 'skills'" class="tpl-pane">
+              <template v-if="hasPolicy">
+                <p class="tpl-hint">
+                  当前模板按阶段精确装载：岗位手艺 + 共性底线 + 模式规范 + 条件专项 + 服务商。
+                  基础/共性/模式层只读，避免把其他岗位或其他模式的规则混进来。
+                </p>
+                <div class="tpl-skill-groups">
+                  <div v-for="group in policyGroups" :key="group.key" class="tpl-skill-group">
+                    <div class="tpl-skill-group-head">
+                      <span>{{ group.label }}</span>
+                      <small>{{ group.items.length || '自动' }}</small>
+                    </div>
+                    <p v-if="group.note" class="tpl-skill-group-note">{{ group.note }}</p>
+                    <div v-for="item in group.items" :key="item.id" class="tpl-skill-row tpl-skill-policy-row">
+                      <span class="tpl-skill-name">{{ item.label }}</span>
+                      <small class="tpl-skill-id">{{ item.id }}</small>
+                      <small v-if="item.note" class="tpl-skill-badge">{{ item.note }}</small>
+                    </div>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
               <div class="tpl-skill-head">
                 <p class="tpl-hint">Skills 成套加载，可整套开启/关闭；点开一条可直接编辑内容。全局基础 Skills 不受影响。</p>
                 <button class="btn" :disabled="locked" @click="startAddSkill">+ 新增 Skill</button>
@@ -108,6 +129,7 @@
                 </div>
                 <p v-if="!skillRefs.length" class="tpl-hint">该 Agent 在该模式下没有模板 Skills。</p>
               </div>
+              </template>
             </div>
 
             <div v-else-if="tab === 'runtime'" class="tpl-pane">
@@ -133,6 +155,9 @@
               <p v-if="previewSize" class="tpl-hint">
                 基础 {{ previewSize.base }} 字 · 模板 {{ previewSize.template }} 字 · Skills {{ previewSize.skills }} 字 ·
                 合计 {{ previewSize.total }} 字（约 {{ Math.ceil(previewSize.total / 1.8) }} tokens）
+                <span v-if="previewSource"> · 来源 {{ previewSource }}</span>
+                <span v-if="previewSkills.length"> · 技能 {{ previewSkills.length }}</span>
+                <span v-if="previewMissing.length"> · 缺失 {{ previewMissing.join(', ') }}</span>
               </p>
               <pre class="tpl-preview">{{ previewText || '点击「生成预览」查看最终系统提示词' }}</pre>
             </div>
@@ -175,7 +200,43 @@ const locked = ref(true)
 
 const allSkills = ref([])
 const skillRefs = ref([])
+const policyEntry = computed(() => {
+  const stage = selectedRow.value?.stageId
+  return stage ? draft.value?.skill_policy?.[stage] || null : null
+})
+const hasPolicy = computed(() => !!policyEntry.value)
+const policyGroups = computed(() => {
+  const entry = policyEntry.value
+  if (!entry) return []
+  const groups = []
+  const addIds = (key, label, ids, note) => {
+    if (!Array.isArray(ids) || !ids.length) return
+    groups.push({ key, label, note, items: ids.map(id => ({ id, label: skillName(id) })) })
+  }
+  addIds('craft', '岗位手艺', entry.craft, '平台内置，只读')
+  addIds('shared', '共性底线', entry.shared, '事实保真、风格锁、连续性，只读')
+  addIds('mode', '模式规范', entry.mode, '当前模板专属，只读')
+  const specialists = (entry.specialists || []).map(item => ({
+    id: item.id,
+    label: skillName(item.id),
+    note: item.when ? `条件：${item.when}` : '',
+  }))
+  if (specialists.length) {
+    groups.push({ key: 'specialists', label: '专项能力', note: '按内容标记条件装载', items: specialists })
+  }
+  if (entry.provider === 'auto') {
+    groups.push({ key: 'provider', label: '服务商', note: '按当前视频服务商自动选择', items: [] })
+  } else if (entry.provider) {
+    groups.push({ key: 'provider', label: '服务商', items: [{ id: entry.provider, label: skillName(entry.provider) }] })
+  }
+  return groups
+})
 const skillCount = computed(() => {
+  const entry = policyEntry.value
+  if (entry) {
+    return (entry.craft?.length || 0) + (entry.shared?.length || 0) + (entry.mode?.length || 0)
+      + (entry.specialists?.length || 0) + (entry.provider && entry.provider !== 'auto' ? 1 : 0)
+  }
   const key = selectedRow.value?.configKey
   if (!draft.value || !key) return 0
   return (draft.value.agent_skills?.[key] || []).length
@@ -197,6 +258,9 @@ const SKILL_DIR = {
 
 const previewText = ref('')
 const previewSize = ref(null)
+const previewSource = ref('')
+const previewSkills = ref([])
+const previewMissing = ref([])
 
 const stageRows = computed(() => {
   const stages = draft.value?.workflow?.stages || []
@@ -313,6 +377,9 @@ function selectStage(row) {
   tab.value = 'prompt'
   previewText.value = ''
   previewSize.value = null
+  previewSource.value = ''
+  previewSkills.value = []
+  previewMissing.value = []
   refreshSkillRefs()
 }
 
@@ -325,6 +392,9 @@ function openPreview() {
   tab.value = 'preview'
   previewText.value = ''
   previewSize.value = null
+  previewSource.value = ''
+  previewSkills.value = []
+  previewMissing.value = []
 }
 
 async function editSkill(id) {
@@ -494,6 +564,9 @@ async function runPreview() {
     const res = await templateAPI.preview(draft.value.id, row.agent, row.stageId)
     previewText.value = res?.system_prompt || ''
     previewSize.value = res?.sizes || null
+    previewSource.value = res?.skill_source || ''
+    previewSkills.value = res?.template_skills || []
+    previewMissing.value = res?.missing_skills || []
   } catch (e) {
     toastError(e)
   }
@@ -503,6 +576,12 @@ onMounted(load)
 </script>
 
 <style scoped>
+.tpl-skill-groups { display: flex; flex-direction: column; gap: 10px; }
+.tpl-skill-group { border: 1px solid var(--border, #e5e7eb); border-radius: 8px; padding: 10px 12px; }
+.tpl-skill-group-head { display: flex; align-items: center; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.tpl-skill-group-note { font-size: 11px; color: var(--text-3, #888); margin: 0 0 6px; }
+.tpl-skill-policy-row { cursor: default; }
+.tpl-skill-badge { font-size: 10px; color: var(--text-3, #888); white-space: nowrap; }
 .tpl-page { padding: 24px; max-width: 100%; box-sizing: border-box; }
 .tpl-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
 .tpl-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: var(--text-0, #111); }

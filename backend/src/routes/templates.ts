@@ -20,7 +20,8 @@ app.get('/:id/preview', async (c) => {
   if (!validAgentTypes.includes(agentType)) return badRequest(c, `无效的 Agent 类型：${agentType}`)
   const stage = c.req.query('stage') || undefined
   if (stage && !WORKFLOW_STAGE_IDS.includes(stage as never)) return badRequest(c, `无效的阶段：${stage}`)
-  const assembled = await assembleInstructions(agentType, template.id, stage, c.req.query('lang'))
+  const provider = c.req.query('provider') || undefined
+  const assembled = await assembleInstructions(agentType, template.id, stage, c.req.query('lang'), 'auto', provider)
   return success(c, {
     template: template.id,
     template_name: template.name,
@@ -28,6 +29,7 @@ app.get('/:id/preview', async (c) => {
     stage: stage || null,
     schema_version: template.schema_version || 1,
     skill_source: assembled.skillSource,
+    provider: provider || null,
     template_skills: assembled.templateSkills,
     missing_skills: assembled.missingSkills,
     runtime: stage ? template.stage_runtime?.[stage] || null : null,

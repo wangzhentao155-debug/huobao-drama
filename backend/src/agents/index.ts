@@ -17,9 +17,9 @@ import { imagePromptTools } from './tools/image-prompt-tools.js'
 import { loadAgentSkills, loadSkillIds, skillWorkspaces } from './skills.js'
 import { loadAgentPromptFile, loadBasePromptFile } from './prompts.js'
 import { buildLanguageDirective } from './language.js'
-import { getContentLanguageFromRC, getDramaId, getStageFromRC } from './context.js'
+import { getContentLanguageFromRC, getDramaId, getProviderFromRC, getStageFromRC } from './context.js'
 import { getVoiceReferenceInstructions } from './voice-reference-instructions.js'
-import { getTemplate, resolveSkillSelection, type SkillSelectionMode } from '../services/templates.js'
+import { getTemplate, getContentFlags, resolveSkillSelection, type SkillSelectionMode } from '../services/templates.js'
 import { resolveModeContext } from '../services/mode-context.js'
 
 // Default prompts (used when workspace/prompts/<type>.md 文件缺失时兜底)
@@ -383,13 +383,14 @@ async function assembleFromTemplate(
   stage?: string | null,
   lang?: string | null,
   selectionMode: SkillSelectionMode = 'auto',
+  provider?: string | null,
 ): Promise<AssembledInstructions> {
   const defaults = DEFAULT_PROMPTS[type]
   const promptFile = await loadAgentPromptFile(type, lang)
   const baseInstructions = promptFile?.instructions || defaults.instructions
   // 阶段级配置优先，缺失回退 Agent 级（兼容仅配置了 Agent 的模板）
   const promptKey = stage && template?.agent_prompts?.[stage] ? stage : type
-  const selection = resolveSkillSelection(template, stage, type, [], selectionMode)
+  const selection = resolveSkillSelection(template, stage, type, getContentFlags(template), selectionMode, provider)
   let skillSource: 'policy' | 'legacy' | 'legacy-fallback' = selection.source
   let templateSkills = selection.skills.map(skill => skill.id)
   let missingSkills: string[] = []
@@ -453,8 +454,9 @@ export async function assembleInstructions(
   stage?: string | null,
   lang?: string | null,
   selectionMode: SkillSelectionMode = 'auto',
+  provider?: string | null,
 ): Promise<AssembledInstructions> {
-  return assembleFromTemplate(type, getTemplate(templateId), stage, lang, selectionMode)
+  return assembleFromTemplate(type, getTemplate(templateId), stage, lang, selectionMode, provider)
 }
 
 export interface ShadowAssemblySide {
@@ -515,8 +517,9 @@ function buildInstructions(type: string) {
     const lang = getContentLanguageFromRC(requestContext)
     const dramaId = getDramaId(requestContext)
     const stage = getStageFromRC(requestContext)
+    const provider = getProviderFromRC(requestContext)
     const ctx = await resolveModeContext(dramaId, { stage, agentType: type })
-    const assembled = await assembleFromTemplate(type, ctx.template, stage, lang)
+    const assembled = await assembleFromTemplate(type, ctx.template, stage, lang, 'auto', provider)
     const key = `${ctx.modeId || 'default'}|${stage || 'agent'}|${lang || 'zh'}|${ctx.manifestHash?.slice(0, 8) || ''}|${assembled.skillSource}`
     if (lastLoggedTemplateKey.get(type) !== key) {
       lastLoggedTemplateKey.set(type, key)

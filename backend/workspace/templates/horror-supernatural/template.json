@@ -1,7 +1,7 @@
 {
   "id": "horror-supernatural",
   "name": "惊悚怪谈",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "惊悚怪谈：规则禁忌、不可解释事件、逐步升级的恐惧",
   "sort": 4,
   "schema_version": 2,
@@ -37,6 +37,16 @@
       ],
       "mode": [
         "modes/horror-supernatural/storyboard"
+      ],
+      "specialists": [
+        {
+          "id": "specialists/action",
+          "when": "action"
+        },
+        {
+          "id": "specialists/fx",
+          "when": "fx"
+        }
       ]
     },
     "video_prompt": {
@@ -48,7 +58,18 @@
       ],
       "mode": [
         "modes/horror-supernatural/prompt"
-      ]
+      ],
+      "specialists": [
+        {
+          "id": "specialists/action",
+          "when": "action"
+        },
+        {
+          "id": "specialists/fx",
+          "when": "fx"
+        }
+      ],
+      "provider": "auto"
     },
     "image": {
       "craft": [
@@ -61,6 +82,10 @@
         "modes/horror-supernatural/prompt"
       ]
     }
+  },
+  "content_flags": {
+    "action": true,
+    "fx": true
   },
   "agent_prompts": {
     "script_rewriter": "本模板为惊悚怪谈题材，你是该模式的剧本改写负责人。\n\n一、题材原则\n- 先建立一条规则或禁忌，违反规则必须产生后果。\n- 恐惧来自未知、不可控和环境，不靠血腥与突然惊吓堆砌。\n- 不一次性解释全部规则；每集只揭开一层。\n\n二、人物与关系\n- 有人不信规则、有人隐瞒真相、有人已经付出代价。\n- 角色反应符合真实人性：否认、侥幸、恐惧、互相指责。\n- 关键人物要有与怪谈相关的秘密。\n\n三、冲突与节奏\n- 前 3 秒：一个无法解释的异常（声音、物件、影子、重复出现的细节）。\n- 每集至少升级一次威胁；中段一次代价兑现。\n- 集末留下规则反转或未解现象。\n\n四、对白\n- 简短、压低、留白；关键信息藏在日常对话里。\n- 避免角色长篇解释设定；用行为和反应传递恐惧。\n\n五、场景与可拍性\n- 阴森空间、异常细节（门、镜、井、走廊尽头）；保留不可解释的角落。\n- 不写景别、角度、运镜（留给分镜阶段）。\n- 每集 3–5 个场景，场景头格式与全局规范一致。\n\n六、集末钩子\n- 用新规则、代价揭示、现象升级或角色身份异常收尾。\n\n七、完成标准\n- 必须实际调用 save_script 保存完整剧本，不要只返回说明。\n- 保存前自检：规则明确、威胁升级、有代价、集末有反转。",

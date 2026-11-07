@@ -3,8 +3,8 @@
 > 项目：AI 短剧制作平台（Huobao Drama 二次开发）
 > 记录日期：2026-11-08
 > 代码基线：`master @ b48e6b2`，工作区有 47 项未提交改动（模板/模式/编辑器等）
-> 目标版本：`4.1.0`；当前构建版本：`4.1.0-p1`
-> 当前状态：P0、P1 全部完成；P2 未开始
+> 目标版本：`4.1.0`；当前构建版本：`4.1.0-p2`
+> 当前状态：P0、P1、P2 全部完成；最终生产发布待验收
 > 唯一事实源：本文件。README / CLAUDE.md 是项目说明，不是本重构的进度源。
 
 ---
@@ -201,11 +201,11 @@ script → extract → storyboard → video_prompt → image → video → merge
 ```text
 4.1.0-p0  兼容层与基础拆分（已完成）
 4.1.0-p1  八套模式包迁移（已完成）
-4.1.0-p2  专项 / 服务商 / UI / 验收
+4.1.0-p2  专项 / 服务商 / UI / 验收（已完成）
 4.1.0     生产发布
 ```
 
-P0 收口版本为 `4.1.0-p0`，P1 收口版本为 `4.1.0-p1`；启动 P2 时执行 `npm run version:sync 4.1.0-p2`。
+P0 收口版本为 `4.1.0-p0`，P1 收口版本为 `4.1.0-p1`，P2 收口版本为 `4.1.0-p2`；最终发布 `4.1.0` 待验收后执行 `npm run version:sync 4.1.0`。
 
 #### 版本命令
 
@@ -355,6 +355,27 @@ P1 完成后，8 套模板 × 5 个阶段全部走 policy：
 
 结论：模式包迁移到 `modes/<mode>/<stage>` 后，每阶段固定 3 个技能块（craft + shared + mode）；旧 `agent_skills` 路径保留，旧快照仍可按 legacy 装配。影子装配只读，不写库、不调用模型、不切换运行时。
 
+### 3.8 P2 专项与服务商结果
+
+| 项 | 结果 |
+|---|---|
+| 专项包 | `specialists/action`、`specialists/emotion`、`specialists/fx` |
+| 条件装载 | 模板 `content_flags` 决定 specialists 的 `when`；无命中不加载 |
+| 服务商包 | `providers/seedance`、`providers/kling`、`providers/jimeng`、`providers/libtv` |
+| 服务商识别 | `video_prompt` 阶段按当前视频配置 provider/协议自动匹配；未识别（如 aliyun/minimax）不加载额外包 |
+| 分层 UI | TemplateManager 显示 craft/shared/mode/specialists/provider；预览显示 source / 技能数 / 缺失 |
+| 八模式验收 | 8 套 × 5 阶段，provider=volcengine，policy 5/5，missing 0，0 超预算 |
+
+典型策略：
+
+```text
+都市 / 古装 / 家庭：script、storyboard、video_prompt 按需加载 emotion
+惊悚 / 玄幻：storyboard、video_prompt 加载 action + fx
+犯罪：action
+体育：action + emotion
+悬疑：无专项
+```
+
 ---
 
 ## 4. 装载、路由与防混乱
@@ -452,15 +473,15 @@ log_layer_breakdown()
 
 | ID | 单元 | 目标 | 状态 |
 |---|---|---|---|
-| P2-01 | 动作专项 | `specialists/action` | 未开始 |
-| P2-02 | 情绪专项 | `specialists/emotion` | 未开始 |
-| P2-03 | 特效专项 | `specialists/fx` | 未开始 |
-| P2-04 | Seedance | `providers/seedance` | 未开始 |
-| P2-05 | Kling | `providers/kling` | 未开始 |
-| P2-06 | 即梦 | `providers/jimeng` | 未开始 |
-| P2-07 | LibTV | `providers/libtv` | 未开始 |
-| P2-08 | 模板编辑器 | 技能按层分组、预览分层 | 未开始 |
-| P2-09 | 八模式验收 | 8 × 1 集全链路 | 未开始 |
+| P2-01 | 动作专项 | `specialists/action` | 已完成 |
+| P2-02 | 情绪专项 | `specialists/emotion` | 已完成 |
+| P2-03 | 特效专项 | `specialists/fx` | 已完成 |
+| P2-04 | Seedance | `providers/seedance` | 已完成 |
+| P2-05 | Kling | `providers/kling` | 已完成 |
+| P2-06 | 即梦 | `providers/jimeng` | 已完成 |
+| P2-07 | LibTV | `providers/libtv` | 已完成 |
+| P2-08 | 模板编辑器 | 技能按层分组、预览分层 | 已完成 |
+| P2-09 | 八模式验收 | 8 × 1 集全链路（结构化验收） | 已完成 |
 
 ---
 
@@ -490,6 +511,10 @@ log_layer_breakdown()
 | 2026-11-08 | P1-01 | urban 模式包迁移 | `skills/modes/urban-realistic/*`、urban template | 迁移后 validate OK；policy 5 阶段 | 完成 |
 | 2026-11-08 | P1-02..08 | 其余 7 套模式包迁移 | `skills/modes/<mode>/*`、各 template | 每套迁移后 validate OK；8/8 policy | 完成 |
 | 2026-11-08 | P1 收口 | 版本 4.1.0-p1 + 最终校验 | `VERSION`、package 文件、template manifests | 版本 7 项；8/8；0 超预算；shadow 0 失败 | 完成 |
+| 2026-11-08 | P2-01..03 | 动作/情绪/特效专项 | `skills/specialists/*`、template `content_flags` | 按模式条件装载；8/8 模板通过 | 完成 |
+| 2026-11-08 | P2-04..07 | 四个服务商包 | `skills/providers/*`、provider 识别/预览 | volcengine→seedance、kling、jimeng、libtv 均可装载，missing 0 | 完成 |
+| 2026-11-08 | P2-08 | 分层技能 UI | `TemplateManager.vue`、preview source/skills/missing | 浏览器实测 craft/shared/mode/specialist/provider 分组 | 完成 |
+| 2026-11-08 | P2-09 | 八模式验收 + 4.1.0-p2 | 全量校验、8×5 provider 验收 | 8/8 模板、policy 5/5、missing 0、0 超预算、shadow 0 失败 | 完成 |
 
 ---
 
@@ -509,6 +534,7 @@ log_layer_breakdown()
 | D-010 | 闸门最多回修 1 次 | 防止无限循环 | 失败标记人工处理 |
 | D-011 | P0 兼容优先：旧文件不删、policy 权威、shadow 只读 | 先证明新装配不破坏旧链路 | P0 完成；7 套旧模板零变化 |
 | D-012 | P1 模式包统一放 `modes/<mode>/<stage>`，旧 `templates/` 路径保留 | 模式差异集中管理，同时保证旧快照/TemplateManager 可回退 | 8 套模板 policy 5 阶段；旧路径仅回退 |
+| D-013 | 专项按 `content_flags` 条件加载；服务商包按当前视频协议自动匹配 | 避免所有模式/所有服务商规则全量注入 | 无命中不加载；未识别服务商跳过，不报错 |
 
 ---
 
@@ -524,7 +550,7 @@ log_layer_breakdown()
 | R-06 | 用户自定义技能路径失效 | 自定义规则丢失 | 保留旧路径别名，不物理删除 |
 | R-07 | 多文档混淆/上下文失忆 | 改错模板/技能 | 本文件 §0 协议 + 单元制 |
 | R-08 | 上下文超限 | 决策质量下降 | 每次只读当前单元源文件 |
-| R-09 | 试点模板已启用 policy，但 TemplateManager 仍显示旧 agent_skills | 编辑者误以为改动生效 | P0/P1 期间不改 urban 技能；P2-08 做分层 UI 与只读提示 |
+| R-09 | 试点模板已启用 policy，但 TemplateManager 仍显示旧 agent_skills | 编辑者误以为改动生效 | 已解决：P2-08 TemplateManager 按 craft/shared/mode/specialist/provider 分组展示；旧 agent_skills 仅在无 policy 模板显示 |
 
 ### 回退步骤
 
@@ -616,24 +642,29 @@ cd frontend && npm run generate
 ## 11. 当前工作单元（交接块）
 
 ```text
-当前单元：P2-01 动作专项
-状态：未开始（P0、P1 已完成）
+当前单元：最终生产发布验收
+状态：P0、P1、P2 完成；4.1.0 待发布
 已完成：
   - P0-01..P0-08：兼容层、5 个 craft、shared、影子装配
   - P1-01..P1-08：8 套模式包迁移到 modes/<mode>/<stage>
-  - P1 收口：4.1.0-p1；8/8 模板 policy 5 阶段；0 缺失
+  - P2-01..P2-03：action/emotion/fx 专项 + content_flags 条件装载
+  - P2-04..P2-07：seedance/kling/jimeng/libtv 服务商包 + auto 识别
+  - P2-08：TemplateManager 分层展示 + 预览 source/skills/missing
+  - P2-09：8 套 × 5 阶段结构化验收，failures=0
 未完成：
-  - P2：action/emotion/fx 专项、4 个 provider 包、分层 UI、生产验收
+  - 真实模型/媒体全链路验收（需要有效 AI 配置与素材）
+  - Kling/即梦/LibTV 实际适配器（当前只有提示词包；任务 #4-7 仍待做）
+  - 最终版本 4.1.0 打 tag / 发布
 验证结果：
-  - npm run version:check：七项一致（4.1.0-p1）
-  - npm run verify:health：运行时返回 4.1.0-p1
+  - npm run version:check：七项一致（4.1.0-p2）
+  - npm run verify:health：运行时返回 4.1.0-p2
   - npm run verify:release：版本 + 类型检查 + 8/8 模板 + 0 超预算 + shadow 0 失败
-  - 8 套模板 × 5 阶段全部 policy；旧 agent_skills 保留为回退/UI 数据
+  - P2 验收：8 套 × 5 阶段，provider=volcengine，policy 5/5，missing 0
 下一步：
-  1. 启动 P2 前把版本升到 4.1.0-p2
-  2. P2-01 动作专项 -> P2-02 情绪 -> P2-03 特效
-  3. P2-04..07 服务商包 -> P2-08 分层 UI -> P2-09 八模式验收
-阻塞与待决策：无
+  1. 用真实剧集对 8 模式做抽检，记录产物问题
+  2. 完成 Kling/即梦/LibTV 适配器后更新对应 provider 包
+  3. 验收通过后 `npm run version:sync 4.1.0`，再打包发布
+阻塞与待决策：真实媒体全链路验收需要可用的 AI 服务配置
 ```
 
 ---
@@ -689,13 +720,13 @@ cd frontend && npm run generate
 | `modes/xianxia-fantasy/*` | L2 | 模板 | 4 阶段 | 已完成 |
 | `modes/family-ethics/*` | L2 | 模板 | 4 阶段 | 已完成 |
 | `modes/sports-competition/*` | L2 | 模板 | 4 阶段 | 已完成 |
-| `specialists/action` | L3 | 条件 | storyboard / video_prompt | 未开始 |
-| `specialists/emotion` | L3 | 条件 | script / storyboard | 未开始 |
-| `specialists/fx` | L3 | 条件 | storyboard / video_prompt | 未开始 |
-| `providers/seedance` | L4 | provider | video_prompt | 未开始 |
-| `providers/kling` | L4 | provider | video_prompt | 未开始 |
-| `providers/jimeng` | L4 | provider | video_prompt | 未开始 |
-| `providers/libtv` | L4 | provider | video_prompt | 未开始 |
+| `specialists/action` | L3 | 条件 | storyboard / video_prompt | 已完成 |
+| `specialists/emotion` | L3 | 条件 | storyboard / video_prompt | 已完成 |
+| `specialists/fx` | L3 | 条件 | storyboard / video_prompt | 已完成 |
+| `providers/seedance` | L4 | provider | video_prompt | 已完成 |
+| `providers/kling` | L4 | provider | video_prompt | 已完成 |
+| `providers/jimeng` | L4 | provider | video_prompt | 已完成 |
+| `providers/libtv` | L4 | provider | video_prompt | 已完成 |
 
 ---
 

@@ -9,7 +9,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { listTemplates, resolveSkillSelection } from '../src/services/templates.js'
+import { listTemplates, getContentFlags, resolveSkillSelection } from '../src/services/templates.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const WORKSPACE = path.resolve(__dirname, '../workspace')
@@ -100,7 +100,7 @@ console.log('\n模板技能：')
 let overBudget = 0
 for (const tpl of templates) {
   for (const agent of agentKeys) {
-    const selection = resolveSkillSelection(tpl, stageOf[agent], agent)
+    const selection = resolveSkillSelection(tpl, stageOf[agent], agent, getContentFlags(tpl))
 
     if (selection.source === 'policy') {
       const skills = selection.skills.map(skill => ({

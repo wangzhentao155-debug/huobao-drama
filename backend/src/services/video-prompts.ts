@@ -7,6 +7,7 @@ import { db, schema } from '../db/index.js'
 import { mastra } from '../mastra/index.js'
 import { buildAgentRequestContext } from '../agents/context.js'
 import { resolveModeContext } from './mode-context.js'
+import { resolveProtocol } from './ai.js'
 import { logTaskError, logTaskProgress, logTaskStart, logTaskSuccess } from '../utils/task-logger.js'
 
 export interface VideoPromptBatchStatus {
@@ -43,9 +44,13 @@ export async function startVideoPromptBatch(
   // 视频模型标签：跟随该集锁定的视频配置，供 Agent 按模型特性生成
   const [ep] = await db.select().from(schema.episodes).where(eq(schema.episodes.id, episodeId))
   let videoLabel = '默认'
+  let videoProvider: string | undefined
   if (ep?.videoConfigId) {
     const [cfg] = await db.select().from(schema.aiServiceConfigs).where(eq(schema.aiServiceConfigs.id, ep.videoConfigId))
-    if (cfg) videoLabel = `${cfg.name} (${cfg.provider})`
+    if (cfg) {
+      videoLabel = `${cfg.name} (${cfg.provider})`
+      videoProvider = resolveProtocol({ provider: cfg.provider || '', endpoint: cfg.endpoint })
+    }
   }
 
   const task: VideoPromptBatchStatus = {
@@ -77,6 +82,7 @@ export async function startVideoPromptBatch(
       modelOverride: opts.model || undefined,
       textConfigId: opts.configId || undefined,
       stage: 'video_prompt',
+      provider: videoProvider,
     })
     const runtime = ctx.runtime
     for (const sb of pending) {
