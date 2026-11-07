@@ -1,7 +1,7 @@
 {
   "id": "urban-realistic",
   "name": "都市现实",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "都市现实题材：生活逻辑、阶层与职场冲突、克制的情绪表达",
   "sort": 1,
   "schema_version": 2,
@@ -14,7 +14,7 @@
         "shared/project-facts"
       ],
       "mode": [
-        "templates/urban-realistic/script-rewriter"
+        "modes/urban-realistic/script"
       ]
     },
     "extract": {
@@ -25,7 +25,7 @@
         "shared/project-facts"
       ],
       "mode": [
-        "templates/urban-realistic/extractor"
+        "modes/urban-realistic/extract"
       ]
     },
     "storyboard": {
@@ -36,7 +36,7 @@
         "shared/project-facts"
       ],
       "mode": [
-        "templates/urban-realistic/storyboard-breaker"
+        "modes/urban-realistic/storyboard"
       ]
     },
     "video_prompt": {
@@ -47,7 +47,7 @@
         "shared/project-facts"
       ],
       "mode": [
-        "templates/urban-realistic/prompt-generator"
+        "modes/urban-realistic/prompt"
       ]
     },
     "image": {
@@ -58,7 +58,7 @@
         "shared/project-facts"
       ],
       "mode": [
-        "templates/urban-realistic/prompt-generator"
+        "modes/urban-realistic/prompt"
       ]
     }
   },

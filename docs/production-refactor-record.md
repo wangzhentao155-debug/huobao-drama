@@ -3,8 +3,8 @@
 > 项目：AI 短剧制作平台（Huobao Drama 二次开发）
 > 记录日期：2026-11-08
 > 代码基线：`master @ b48e6b2`，工作区有 47 项未提交改动（模板/模式/编辑器等）
-> 目标版本：`4.1.0`；当前构建版本：`4.1.0-p0`
-> 当前状态：P0 全部完成（P0-01..P0-08），P1 未开始
+> 目标版本：`4.1.0`；当前构建版本：`4.1.0-p1`
+> 当前状态：P0、P1 全部完成；P2 未开始
 > 唯一事实源：本文件。README / CLAUDE.md 是项目说明，不是本重构的进度源。
 
 ---
@@ -200,12 +200,12 @@ script → extract → storyboard → video_prompt → image → video → merge
 
 ```text
 4.1.0-p0  兼容层与基础拆分（已完成）
-4.1.0-p1  八套模式包迁移
+4.1.0-p1  八套模式包迁移（已完成）
 4.1.0-p2  专项 / 服务商 / UI / 验收
 4.1.0     生产发布
 ```
 
-P0 收口版本为 `4.1.0-p0`；启动 P1 时执行 `npm run version:sync 4.1.0-p1`。
+P0 收口版本为 `4.1.0-p0`，P1 收口版本为 `4.1.0-p1`；启动 P2 时执行 `npm run version:sync 4.1.0-p2`。
 
 #### 版本命令
 
@@ -326,7 +326,7 @@ L0 1.0k + L1 3.2k + L1S 0.6k + L2 仙侠 0.5k
 
 ### 3.6 P0-02 试点结果（urban-realistic）
 
-`urban-realistic` 已切换为 `schema_version: 2 + skill_policy`，模板版本从 `1.0.3` 升到 `1.1.0`；其余 7 套仍走旧 `agent_skills`：
+`urban-realistic` 作为 P0 试点先切换为 `schema_version: 2 + skill_policy`；P1 完成后 8 套模板全部走 policy，旧 `agent_skills` 仅保留为回退与 TemplateManager 兼容数据：
 
 | 阶段 | source | 装载技能 | 技能字 | 总字 |
 |---|---|---|---|---|
@@ -347,12 +347,13 @@ L0 1.0k + L1 3.2k + L1S 0.6k + L2 仙侠 0.5k
 
 `npm run verify:shadow` 对 8 套模板 × 5 个阶段同时按 legacy / policy 装配：
 
+P1 完成后，8 套模板 × 5 个阶段全部走 policy：
+
 | 模板 | schema | policy 阶段 | 对比结果 |
 |---|---|---|---|
-| urban-realistic | 2 | 5 | 5 个阶段均走 policy，0 缺失 |
-| 其余 7 套 | 1 | 0 | 35 个组合 legacy = policy，完全一致 |
+| 8 套全部 | 2 | 各 5 | 40 个组合均走 policy，0 缺失、0 回退 |
 
-结论：兼容层没有改变旧模板行为；urban 的 policy 装配无缺失、无回退。影子装配只读，不写库、不调用模型、不切换运行时。
+结论：模式包迁移到 `modes/<mode>/<stage>` 后，每阶段固定 3 个技能块（craft + shared + mode）；旧 `agent_skills` 路径保留，旧快照仍可按 legacy 装配。影子装配只读，不写库、不调用模型、不切换运行时。
 
 ---
 
@@ -436,14 +437,14 @@ log_layer_breakdown()
 
 | ID | 模式 | 目标 | 状态 |
 |---|---|---|---|
-| P1-01 | urban-realistic | 4 个阶段模式包 | 未开始 |
-| P1-02 | costume-romance | 4 个阶段模式包 | 未开始 |
-| P1-03 | suspense-mystery | 4 个阶段模式包 | 未开始 |
-| P1-04 | horror-supernatural | 4 个阶段模式包 | 未开始 |
-| P1-05 | crime-espionage | 4 个阶段模式包 | 未开始 |
-| P1-06 | xianxia-fantasy | 4 个阶段模式包 | 未开始 |
-| P1-07 | family-ethics | 4 个阶段模式包 | 未开始 |
-| P1-08 | sports-competition | 4 个阶段模式包 | 未开始 |
+| P1-01 | urban-realistic | 4 个阶段模式包 | 已完成 |
+| P1-02 | costume-romance | 4 个阶段模式包 | 已完成 |
+| P1-03 | suspense-mystery | 4 个阶段模式包 | 已完成 |
+| P1-04 | horror-supernatural | 4 个阶段模式包 | 已完成 |
+| P1-05 | crime-espionage | 4 个阶段模式包 | 已完成 |
+| P1-06 | xianxia-fantasy | 4 个阶段模式包 | 已完成 |
+| P1-07 | family-ethics | 4 个阶段模式包 | 已完成 |
+| P1-08 | sports-competition | 4 个阶段模式包 | 已完成 |
 
 每个模式完成后必须立即 dry-run 并记录，**不得攒到最后一起验**。
 
@@ -486,6 +487,9 @@ log_layer_breakdown()
 | 2026-11-08 | P0-08 | 影子装配 | `scripts/shadow-assemble.ts`、`assembleShadow()` | 8 套 × 5 阶段；0 失败；旧模板全部 same | 完成 |
 | 2026-11-08 | P0 收口 | 模板版本与最终校验 | `templates/urban-realistic/template.json` | urban 1.0.3 → 1.1.0；verify:release + verify:health 通过 | 完成 |
 | 2026-11-08 | 品牌清理 | 移除原品牌/SaaS/快捷配置；productName 与安装包改名 | `settings.vue`、`server-update.ts`、`updater.ts`、`electron-builder.yml`、README、locales | 前端构建；UI 无快捷配置；前端测试 6/6；typecheck | 完成 |
+| 2026-11-08 | P1-01 | urban 模式包迁移 | `skills/modes/urban-realistic/*`、urban template | 迁移后 validate OK；policy 5 阶段 | 完成 |
+| 2026-11-08 | P1-02..08 | 其余 7 套模式包迁移 | `skills/modes/<mode>/*`、各 template | 每套迁移后 validate OK；8/8 policy | 完成 |
+| 2026-11-08 | P1 收口 | 版本 4.1.0-p1 + 最终校验 | `VERSION`、package 文件、template manifests | 版本 7 项；8/8；0 超预算；shadow 0 失败 | 完成 |
 
 ---
 
@@ -504,6 +508,7 @@ log_layer_breakdown()
 | D-009 | 确定性路由 | 不让模型选技能 | 选择只看阶段/模板/provider/flags |
 | D-010 | 闸门最多回修 1 次 | 防止无限循环 | 失败标记人工处理 |
 | D-011 | P0 兼容优先：旧文件不删、policy 权威、shadow 只读 | 先证明新装配不破坏旧链路 | P0 完成；7 套旧模板零变化 |
+| D-012 | P1 模式包统一放 `modes/<mode>/<stage>`，旧 `templates/` 路径保留 | 模式差异集中管理，同时保证旧快照/TemplateManager 可回退 | 8 套模板 policy 5 阶段；旧路径仅回退 |
 
 ---
 
@@ -611,29 +616,23 @@ cd frontend && npm run generate
 ## 11. 当前工作单元（交接块）
 
 ```text
-当前单元：P1-01 urban-realistic 模式包迁移
-状态：未开始（P0 已完成）
+当前单元：P2-01 动作专项
+状态：未开始（P0、P1 已完成）
 已完成：
-  - P0-01 备份 + 版本单一来源 4.1.0-p0 + 健康检查统一
-  - P0-02 schema_version + skill_policy + 按 ID 精确装载 + 旧格式回退
-  - P0-03 craft/script-craft
-  - P0-04 craft/asset-craft
-  - P0-05 craft/storyboard-craft
-  - P0-06 craft/video-prompt-craft + craft/image-prompt-craft
-  - P0-07 shared/project-facts + policy shared 层
-  - P0-08 shadow 装配：8 套 × 5 阶段，0 失败
+  - P0-01..P0-08：兼容层、5 个 craft、shared、影子装配
+  - P1-01..P1-08：8 套模式包迁移到 modes/<mode>/<stage>
+  - P1 收口：4.1.0-p1；8/8 模板 policy 5 阶段；0 缺失
 未完成：
-  - P1：8 套模式包迁移到 modes/<mode>/<stage>
   - P2：action/emotion/fx 专项、4 个 provider 包、分层 UI、生产验收
 验证结果：
-  - npm run version:check：七项一致
-  - npm run verify:health：运行时返回 4.1.0-p0
+  - npm run version:check：七项一致（4.1.0-p1）
+  - npm run verify:health：运行时返回 4.1.0-p1
   - npm run verify:release：版本 + 类型检查 + 8/8 模板 + 0 超预算 + shadow 0 失败
-  - urban policy：script 3217、extract 4573、storyboard 5915、video_prompt 4609、image 5010
-  - 其余 7 套：legacy = policy，完全一致
+  - 8 套模板 × 5 阶段全部 policy；旧 agent_skills 保留为回退/UI 数据
 下一步：
-  1. 启动 P1 前把版本升到 4.1.0-p1
-  2. 逐个模式迁移 4 个阶段包，完成一个验证一个
+  1. 启动 P2 前把版本升到 4.1.0-p2
+  2. P2-01 动作专项 -> P2-02 情绪 -> P2-03 特效
+  3. P2-04..07 服务商包 -> P2-08 分层 UI -> P2-09 八模式验收
 阻塞与待决策：无
 ```
 
@@ -682,14 +681,14 @@ cd frontend && npm run generate
 | `craft/video-prompt-craft` | L1 | `prompt_generator` | video_prompt | 已完成 |
 | `craft/image-prompt-craft` | L1 | `prompt_generator` | image | 已完成 |
 | `shared/project-facts` | L1S | 全部 | 相关阶段 | 已完成 |
-| `modes/urban-realistic/*` | L2 | 模板 | 4 阶段 | 未开始 |
-| `modes/costume-romance/*` | L2 | 模板 | 4 阶段 | 未开始 |
-| `modes/suspense-mystery/*` | L2 | 模板 | 4 阶段 | 未开始 |
-| `modes/horror-supernatural/*` | L2 | 模板 | 4 阶段 | 未开始 |
-| `modes/crime-espionage/*` | L2 | 模板 | 4 阶段 | 未开始 |
-| `modes/xianxia-fantasy/*` | L2 | 模板 | 4 阶段 | 未开始 |
-| `modes/family-ethics/*` | L2 | 模板 | 4 阶段 | 未开始 |
-| `modes/sports-competition/*` | L2 | 模板 | 4 阶段 | 未开始 |
+| `modes/urban-realistic/*` | L2 | 模板 | 4 阶段 | 已完成 |
+| `modes/costume-romance/*` | L2 | 模板 | 4 阶段 | 已完成 |
+| `modes/suspense-mystery/*` | L2 | 模板 | 4 阶段 | 已完成 |
+| `modes/horror-supernatural/*` | L2 | 模板 | 4 阶段 | 已完成 |
+| `modes/crime-espionage/*` | L2 | 模板 | 4 阶段 | 已完成 |
+| `modes/xianxia-fantasy/*` | L2 | 模板 | 4 阶段 | 已完成 |
+| `modes/family-ethics/*` | L2 | 模板 | 4 阶段 | 已完成 |
+| `modes/sports-competition/*` | L2 | 模板 | 4 阶段 | 已完成 |
 | `specialists/action` | L3 | 条件 | storyboard / video_prompt | 未开始 |
 | `specialists/emotion` | L3 | 条件 | script / storyboard | 未开始 |
 | `specialists/fx` | L3 | 条件 | storyboard / video_prompt | 未开始 |
